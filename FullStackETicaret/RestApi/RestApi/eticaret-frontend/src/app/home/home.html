@@ -1,0 +1,49 @@
+<div class="container mt-5 mb-5">
+  <div class="row align-items-center mb-4">
+    <div class="col-md-6">
+      <h2 class="fw-bold mb-0">Öne Çıkan Ürünler</h2>
+    </div>
+    
+    <div class="col-md-6">
+      <div class="d-flex gap-2">
+        <input type="text" class="form-control rounded-pill" placeholder="Ürün ara..." 
+               [(ngModel)]="searchTerm" (ngModelChange)="applyFilter()">
+        
+        <select class="form-select rounded-pill w-auto" [(ngModel)]="selectedCategory" (ngModelChange)="applyFilter()">
+          <option *ngFor="let cat of categories" [value]="cat">{{cat}}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="row row-cols-1 row-cols-md-3 g-4">
+    <div class="col" *ngFor="let p of products">
+      <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden" style="background-color: #f8f9fa;">
+        
+        <div class="position-relative">
+          <span class="badge bg-dark position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 opacity-75">
+            {{ p.category }}
+          </span>
+          <img [src]="p.img || 'https://via.placeholder.com/400x300'" class="card-img-top" alt="Ürün" style="height: 250px; object-fit: cover;">
+        </div>
+        
+        <div class="card-body p-4 d-flex flex-column">
+          <h5 class="card-title fw-bold text-dark mb-1">{{ p.name }}</h5>
+          <p class="card-text text-muted small mb-4">Premium Nexus Collection</p>
+          
+          <div class="mt-auto d-flex justify-content-between align-items-center">
+            <span class="fs-4 fw-bolder text-primary">{{ p.price }} ₺</span>
+            <button class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm" (click)="addToCart(p)">
+              <i class="bi bi-bag-plus me-1"></i> Ekle
+            </button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="products.length === 0" class="text-center py-5">
+    <h4 class="text-muted">Bu kategoride veya aramada ürün bulunamadı.</h4>
+  </div>
+</div>

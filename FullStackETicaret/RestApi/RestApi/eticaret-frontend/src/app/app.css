@@ -1,0 +1,27 @@
+:host { --primary: #00d2ff; --dark: #1a1c23; --text: #b5b7c0; display: block; }
+
+.admin-container { display: flex; height: 100vh; background: #f8f9fa; font-family: 'Segoe UI', sans-serif; width: 100%; }
+
+/* Sidebar */
+.sidebar { width: 280px; background: var(--dark); color: white; display: flex; flex-direction: column; padding: 20px; z-index: 100; flex-shrink: 0; }
+.brand { font-size: 22px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 12px; padding-bottom: 30px; border-bottom: 1px solid #333; }
+
+.menu { flex: 1; margin-top: 25px; }
+.menu-label { font-size: 11px; color: #555; letter-spacing: 1px; margin: 20px 0 10px 10px; font-weight: bold; }
+.nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: var(--text); text-decoration: none; border-radius: 8px; transition: 0.3s; margin-bottom: 5px; cursor: pointer; }
+.nav-link:hover, .nav-link.active { background: rgba(0, 210, 255, 0.1); color: var(--primary); }
+
+/* Kullanıcı ve Çıkış */
+.user-section { border-top: 1px solid #333; padding-top: 20px; }
+.user-card { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+.avatar { width: 45px; height: 45px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #1a1c23; }
+.username { display: block; font-weight: 600; font-size: 14px; color: white; }
+.badge { font-size: 10px; color: var(--primary); background: rgba(0, 210, 255, 0.1); padding: 2px 6px; border-radius: 4px; }
+
+.logout-btn { width: 100%; padding: 10px; background: #ff4757; color: white; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; transition: 0.3s; }
+.logout-btn:hover { background: #ff6b81; }
+
+/* Content */
+.main-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 0; }
+.header { background: white; padding: 20px 40px; border-bottom: 1px solid #eee; }
+.content { padding: 30px; }

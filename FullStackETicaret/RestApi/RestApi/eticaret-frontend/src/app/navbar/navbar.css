@@ -1,0 +1,17 @@
+.navbar-brand:hover {
+    color: #fff;
+    transform: scale(1.02);
+    transition: 0.3s;
+}
+
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.text-primary {
+    color: #6366f1 !important; /* Nexus markasına uygun bir mor/mavi */
+}

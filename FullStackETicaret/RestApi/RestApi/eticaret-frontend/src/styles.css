@@ -1,0 +1,24 @@
+/* @import satırı HER ŞEYDEN önce gelmeli! */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f4f7f6;
+}
+
+body.dark-theme {
+  background-color: #121212;
+  color: white;
+}
+/* Diğer CSS kodların buranın altına gelebilir... */
+/* Kartlar için genel modern stil */
+.card {
+  border: none !important;
+  border-radius: 15px !important;
+  transition: all 0.3s ease;
+}
+
+/* Resimlerin taşmasını engelle */
+img {
+  max-width: 100%;
+}

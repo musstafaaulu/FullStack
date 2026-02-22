@@ -1,0 +1,75 @@
+<div class="container mt-5 mb-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="card shadow-lg border-0 rounded-4 p-4" style="background-color: #f8f9fa;">
+        
+        <div *ngIf="isLoginMode">
+          <div class="text-center mb-4">
+            <h3 class="fw-bold text-dark">Tekrar Hoş Geldin</h3>
+            <p class="text-muted small">Alışverişe devam etmek için giriş yap</p>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary small">E-posta Adresi</label>
+            <input type="email" class="form-control rounded-pill py-2" 
+                   [(ngModel)]="loginObj.email" placeholder="ornek@mail.com">
+          </div>
+          
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-secondary small">Şifre</label>
+            <input type="password" class="form-control rounded-pill py-2" 
+                   [(ngModel)]="loginObj.password" placeholder="******">
+          </div>
+          
+          <button class="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm" (click)="onLogin()">
+            Giriş Yap
+          </button>
+          
+          <div class="text-center mt-4">
+            <span class="text-muted">Hesabın yok mu? </span>
+            <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none" (click)="toggleMode()">
+              Hemen Kayıt Ol
+            </a>
+          </div>
+        </div>
+
+        <div *ngIf="!isLoginMode">
+          <div class="text-center mb-4">
+            <h3 class="fw-bold text-dark">Yeni Hesap Oluştur</h3>
+            <p class="text-muted small">Aramıza katıl ve indirimleri yakala</p>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary small">Ad Soyad</label>
+            <input type="text" class="form-control rounded-pill py-2" 
+                   [(ngModel)]="registerObj.name" placeholder="Ad Soyad">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary small">E-posta Adresi</label>
+            <input type="email" class="form-control rounded-pill py-2" 
+                   [(ngModel)]="registerObj.email" placeholder="ornek@mail.com">
+          </div>
+          
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-secondary small">Şifre</label>
+            <input type="password" class="form-control rounded-pill py-2" 
+                   [(ngModel)]="registerObj.password" placeholder="******">
+          </div>
+          
+          <button class="btn btn-success w-100 rounded-pill fw-bold py-2 shadow-sm" (click)="onRegister()">
+            Kayıt Ol
+          </button>
+          
+          <div class="text-center mt-4">
+            <span class="text-muted">Zaten hesabın var mı? </span>
+            <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none" (click)="toggleMode()">
+              Giriş Yap
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

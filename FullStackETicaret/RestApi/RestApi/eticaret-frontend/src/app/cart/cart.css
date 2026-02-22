@@ -1,0 +1,12 @@
+.table-hover tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.03);
+}
+
+.card {
+  transition: transform 0.2s;
+}
+
+.btn-success {
+  background: linear-gradient(45deg, #198754, #146c43);
+  border: none;
+}

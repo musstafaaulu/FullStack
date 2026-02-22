@@ -1,0 +1,467 @@
+<div class="toast-container">
+  <div *ngFor="let t of toasts" class="toast" [ngClass]="t.type">
+    <i class="fas" [ngClass]="t.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'"></i>
+    <span>{{ t.message }}</span>
+  </div>
+</div>
+
+<div *ngIf="currentUser && (currentUser.role === 'Super Admin' || (currentUser.role && currentUser.role.includes('Admin')))" class="admin-wrapper" [class.dark-mode-active]="isDarkMode">
+  
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-box" style="background: linear-gradient(135deg, #6366f1, #a855f7);">N</div>
+      <span style="letter-spacing: 1px; font-weight: 800;">NEXUS CORE</span>
+    </div>
+
+    <nav class="nav-container">
+      <p class="nav-label">KONTROL MERKEZİ</p>
+      <div class="nav-item" (click)="changeView('dashboard')" [class.active]="view === 'dashboard'">
+        <i class="fas fa-chart-pie"></i> <span>Genel Bakış</span>
+      </div>
+
+      <p class="nav-label">ENVANTER & SATIŞ</p>
+      <div class="nav-item" (click)="changeView('products')" [class.active]="view === 'products' || view === 'addProduct' || view === 'edit-product'">
+        <i class="fas fa-shopping-bag"></i> <span>Ürün Yönetimi</span>
+      </div>
+      <div class="nav-item" (click)="changeView('orders')" [class.active]="view === 'orders'">
+        <i class="fas fa-box"></i> <span>Sipariş Yönetimi</span>
+        <span class="badge" style="background: #ef4444;" *ngIf="orders && orders.length > 0">{{orders.length}}</span>
+      </div>
+      <div class="nav-item" (click)="changeView('categories')" [class.active]="view === 'categories'">
+        <i class="fas fa-layer-group"></i> <span>Kategoriler</span>
+      </div>
+      <div class="nav-item" (click)="changeView('coupons')" [class.active]="view === 'coupons'">
+        <i class="fas fa-ticket-alt"></i> <span>Kupon Yönetimi</span>
+      </div>
+
+      <p class="nav-label">MÜŞTERİ & YÖNETİM</p>
+      <div class="nav-item" (click)="changeView('messages')" [class.active]="view === 'messages'">
+        <i class="fas fa-envelope"></i> <span>Mesajlar</span>
+        <span class="badge" style="background: #6366f1;" *ngIf="messages && messages.length > 0">{{messages.length}}</span>
+      </div>
+      <div class="nav-item" (click)="changeView('comments')" [class.active]="view === 'comments'">
+        <i class="fas fa-comment-alt"></i> <span>Yorum Kontrolü</span>
+        <span class="badge" *ngIf="comments && comments.length > 0">{{comments.length}}</span>
+      </div>
+      <div class="nav-item" (click)="changeView('users')" [class.active]="view === 'users'">
+        <i class="fas fa-users"></i> <span>Kullanıcı Listesi</span>
+      </div>
+      <div class="nav-item" (click)="changeView('admins')" [class.active]="view === 'admins'">
+        <i class="fas fa-user-shield"></i> <span>Admin Kadrosu</span>
+      </div>
+      
+      <div class="nav-item theme-item" (click)="toggleDarkMode()">
+        <i class="fas" [ngClass]="isDarkMode ? 'fa-sun' : 'fa-moon'"></i>
+        <span>{{ isDarkMode ? 'Aydınlık Mod' : 'Karanlık Mod' }}</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-pill" *ngIf="currentUser">
+        <div class="u-avatar">{{ currentUser.name?.charAt(0) || 'A' }}</div>
+        <div class="u-info">
+          <span class="u-name">{{ currentUser.name }}</span>
+          <span class="u-role">{{ currentUser.role }}</span>
+        </div>
+      </div>
+      <button class="logout-btn" (click)="logout()">
+        <i class="fas fa-power-off"></i> Çıkış Yap
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <div class="welcome">
+        <h1>
+          {{ 
+            view === 'dashboard' ? 'Dashboard' : 
+            view === 'products' ? 'Ürün Portföyü' : 
+            view === 'orders' ? 'Sipariş Yönetimi' : 
+            view === 'categories' ? 'Kategori Yönetimi' : 
+            view === 'admins' ? 'Admin Kadrosu' : 
+            view === 'users' ? 'Müşteri Veritabanı' : 
+            view === 'comments' ? 'Yorum Kontrolü' : 
+            view === 'messages' ? 'Müşteri Mesajları' : 
+            view === 'coupons' ? 'Kupon ve Kampanyalar' : 'Yönetim Paneli' 
+          }}
+        </h1>
+        <p>Sistemin durumu bugün harika, işte detaylar.</p>
+      </div>
+      <div class="header-tools">
+        <button class="q-btn" style="background: #fff; color: #333; margin-right: 10px;" (click)="printReport()">
+          <i class="fas fa-print"></i> Yazdır
+        </button>
+        <div class="date-chip"><i class="far fa-calendar-alt"></i> 19 Şubat 2026</div>
+      </div>
+    </header>
+
+    <section *ngIf="view === 'dashboard'" class="fade-in">
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="s-data">
+            <span class="s-label">AYLIK GELİR</span>
+            <h3 class="s-value">{{stats.monthlyRevenue | number}} ₺</h3>
+            <span class="s-trend"><i class="fas fa-arrow-up"></i> %14.2</span>
+          </div>
+          <i class="fas fa-wallet s-icon"></i>
+        </div>
+        
+        <div class="stat-card orange" (click)="changeView('products')" style="cursor:pointer;">
+          <div class="s-data">
+            <span class="s-label">KRİTİK STOK</span>
+            <h3 class="s-value">{{stats.criticalStock}} Ürün</h3>
+            <span class="s-status danger">Acil Eylem</span>
+          </div>
+          <i class="fas fa-exclamation-circle s-icon"></i>
+        </div>
+
+        <div class="stat-card cyan">
+          <div class="s-data">
+            <span class="s-label">AKTİF MÜŞTERİ</span>
+            <h3 class="s-value">{{stats.totalCustomers}}</h3>
+            <span class="s-trend"><i class="fas fa-user-plus"></i> +5 Bugün</span>
+          </div>
+          <i class="fas fa-users s-icon"></i>
+        </div>
+      </div>
+
+      <div class="dashboard-bottom">
+        <div class="chart-box">
+          <div class="box-head"><h3>Satış Analizi</h3></div>
+          <div class="chart-container" style="position: relative; height:300px; width:100%">
+            <canvas id="salesChart"></canvas>
+          </div>
+        </div>
+        <div class="quick-box">
+          <h3>Hızlı İşlemler</h3>
+          <button class="q-btn primary" (click)="changeView('addProduct')"><i class="fas fa-plus"></i> Yeni Ürün Ekle</button>
+          <button class="q-btn" style="background: #ecfdf5; color: #059669; border: 1px solid #10b981;" (click)="approveAllOrders()">
+            <i class="fas fa-shipping-fast"></i> Tümünü Kargola
+          </button>
+          <button class="q-btn" (click)="changeView('coupons')"><i class="fas fa-ticket-alt"></i> Kupon Oluştur</button>
+        </div>
+      </div>
+
+      <div class="log-section" style="margin-top: 30px;">
+        <div class="section-header">
+          <h3><i class="fas fa-history"></i> Son Sistem Hareketleri</h3>
+        </div>
+        <div class="log-list">
+          <div class="log-item" *ngFor="let log of systemLogs">
+            <span class="log-time">{{log.time}}</span>
+            <span class="log-user"><strong>{{log.user}}</strong></span>
+            <span class="log-action">{{log.action}}</span>
+            <span class="log-tag" [ngClass]="log.type">{{log.type}}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="view === 'coupons'" class="fade-in">
+      <div class="product-form-card" style="margin-bottom: 30px;">
+        <div class="form-title">Yeni İndirim Kuponu Oluştur</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Kupon Kodu</label><input type="text" [(ngModel)]="newCoupon.code" placeholder="Örn: BIRADERIM20"></div>
+          <div class="form-group"><label>İndirim Oranı (%)</label><input type="number" [(ngModel)]="newCoupon.discount" placeholder="20"></div>
+          <div class="form-group" style="display: flex; align-items: flex-end;">
+            <button class="q-btn primary w-100" (click)="addCoupon()">Kuponu Tanımla</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <table class="premium-table">
+          <thead>
+            <tr><th>Kupon Kodu</th><th>İndirim</th><th>Durum</th><th class="text-right">İşlem</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of coupons; let i = index">
+              <td><strong>{{c.code}}</strong></td>
+              <td><span class="tag" style="background: #dcfce7; color: #166534;">%{{c.discount}} İndirim</span></td>
+              <td><span class="tag" style="background: #f0f9ff; color: #0369a1;">Aktif</span></td>
+              <td class="text-right">
+<button class="btn-icon delete" (click)="deleteCoupon(i)">
+  <i class="fas fa-trash"></i>
+</button>              </td>
+            </tr>
+            <tr *ngIf="coupons.length === 0">
+              <td colspan="4" style="text-align: center; padding: 20px; color: #64748b;">Henüz tanımlı kupon bulunmuyor.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section *ngIf="view === 'products'" class="fade-in">
+      <div class="table-controls" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Ürün ara..." class="premium-input" style="flex: 2;">
+        
+        <select [(ngModel)]="selectedCategory" class="premium-input" style="flex: 1;">
+          <option value="Hepsi">Tüm Kategoriler</option>
+          <option *ngFor="let cat of categories" [value]="cat">{{cat}}</option>
+        </select>
+
+        <select [(ngModel)]="sortType" class="premium-input" style="flex: 1;">
+          <option value="newest">En Yeniler</option>
+          <option value="priceLow">Fiyat: Artan</option>
+          <option value="priceHigh">Fiyat: Azalan</option>
+        </select>
+
+        <button class="q-btn primary" style="width: auto;" (click)="changeView('addProduct')">Yeni Ürün</button>
+      </div>
+
+      <div class="table-card">
+        <table class="premium-table">
+          <thead>
+            <tr><th>Görsel</th><th>Ürün</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th class="text-right">İşlem</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of filteredProducts">
+              <td><img [src]="p.img" class="p-thumb"></td>
+              <td><strong>{{p.name}}</strong></td>
+              <td><span class="tag">{{p.category}}</span></td>
+              <td><strong>{{p.price | number}} ₺</strong></td>
+              <td>
+                <span [ngClass]="{'stock-alert-active': p.stock < 10}">
+                  {{p.stock}} Adet
+                  <i *ngIf="p.stock < 10" class="fas fa-exclamation-triangle"></i>
+                </span>
+              </td>
+              <td class="text-right">
+                <button class="btn-icon edit" (click)="editProduct(p)"><i class="fas fa-edit"></i></button>
+                <button class="btn-icon delete" (click)="deleteProduct(p.id)"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section *ngIf="view === 'users'" class="fade-in">
+      <div class="table-card">
+        <table class="premium-table">
+          <thead>
+            <tr><th>ID</th><th>E-Posta</th><th>Toplam Harcama</th><th>Durum</th><th class="text-right">İşlem</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of users">
+              <td>#{{u.id}}</td>
+              <td><strong>{{u.email}}</strong></td>
+              <td><strong style="color: #10b981;">{{ getUserTotalSpend(u.email) | currency:'TRY':'symbol':'1.2-2' }}</strong></td>
+              <td><span class="tag" [style.background]="u.status === 'Aktif' ? '#22c55e' : '#ef4444'">{{u.status}}</span></td>
+              <td class="text-right">
+                <button *ngIf="currentUser && currentUser.role === 'Super Admin'" class="btn-icon approve" (click)="makeAdmin(u)"><i class="fas fa-user-plus" style="color: #6366f1;"></i></button>
+                <button class="btn-icon delete" (click)="removeUser(u.id)"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section *ngIf="view === 'messages'" class="fade-in">
+      <div class="message-list">
+        <div *ngFor="let msg of messages" class="message-card" [ngClass]="{'unread': msg.status === 'unread'}">
+          <div class="message-header">
+            <span class="sender"><i class="fas fa-user-circle"></i> {{msg.sender}}</span>
+            <span class="date">{{msg.date}}</span>
+          </div>
+          <div class="message-subject"><strong>Konu:</strong> {{msg.subject}}</div>
+          <p class="message-content">{{msg.content}}</p>
+          <div class="message-actions" style="margin-top: 15px; display: flex; gap: 10px;">
+            <button (click)="readMessage(msg)" *ngIf="msg.status === 'unread'" class="q-btn primary" style="padding: 5px 15px; font-size: 12px;">Okundu İşaretle</button>
+            <button (click)="deleteMessage(msg.id)" class="q-btn" style="padding: 5px 15px; font-size: 12px; background: #fee2e2; color: #ef4444;">Sil</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="view === 'orders'" class="fade-in">
+      <div class="table-card">
+        <table class="premium-table">
+          <thead>
+            <tr><th>No</th><th>Müşteri</th><th>İçerik</th><th>Tutar</th><th>Tarih</th><th>Durum</th><th class="text-right">İşlem</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of orders" (click)="openOrderDetails(o)" style="cursor: pointer;">
+              <td><strong>{{o.id || o.no}}</strong></td>
+              <td>{{o.user || o.customer}}</td>
+              <td><small>{{o.items || o.content}}</small></td>
+              <td><strong>{{o.total | number}} ₺</strong></td>
+              <td>{{o.date}}</td>
+              <td><span [class]="'tag ' + (o.status === 'Hazırlanıyor' ? 'cat-aksesuar' : (o.status === 'Kargolandı' ? 'cat-elektronik' : 'cat-spor'))">{{o.status}}</span></td>
+              <td class="text-right" (click)="$event.stopPropagation()">
+                <button *ngIf="o.status === 'Hazırlanıyor'" class="btn-icon approve" (click)="updateOrderStatus(o.id || o.no, 'Kargolandı')"><i class="fas fa-truck"></i></button>
+                <button *ngIf="o.status === 'Kargolandı'" class="btn-icon approve" (click)="updateOrderStatus(o.id || o.no, 'Teslim Edildi')"><i class="fas fa-check-double"></i></button>
+                <button class="btn-icon delete" (click)="deleteOrder(o.id || o.no)"><i class="fas fa-times"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section *ngIf="view === 'categories'" class="fade-in">
+      <div class="product-form-card" style="max-width: 500px; margin-bottom: 30px;">
+        <div class="form-title">Yeni Kategori Tanımla</div>
+        <div class="form-group">
+          <label>Kategori İsmi</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" [(ngModel)]="newCategoryName" placeholder="Örn: Aksesuar..." class="premium-input">
+            <button class="q-btn primary" (click)="addCategory()">Ekle</button>
+          </div>
+        </div>
+      </div>
+      <div class="nexus-cat-grid">
+        <div class="cat-item-modern" *ngFor="let cat of categories">
+          <div class="cat-info">
+            <span style="font-size: 20px; margin-right: 10px;">📁</span>
+            <span style="font-weight: 700; color: #1e293b;">{{cat}}</span>
+          </div>
+          <button class="btn-icon delete" (click)="deleteCategory(cat)"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="view === 'admins'" class="fade-in">
+      <div class="table-card">
+        <div class="table-header" style="padding: 20px; border-bottom: 1px solid #f1f5f9;">
+          <h3 style="margin: 0; color: #1e293b;">Yetkili Listesi</h3>
+        </div>
+        <table class="premium-table">
+          <thead>
+            <tr><th>ID</th><th>Yetkili İsmi</th><th>E-Posta</th><th>Rolü</th><th class="text-right" *ngIf="currentUser && currentUser.role === 'Super Admin'">Yönetim</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of admins">
+              <td>#{{a.id}}</td><td><strong>{{a.name}}</strong></td><td>{{a.email}}</td>
+              <td><span class="tag" style="background: #e0e7ff; color: #4338ca;">{{a.role}}</span></td>
+              <td class="text-right" *ngIf="currentUser && currentUser.role === 'Super Admin'">
+                <button class="btn-icon delete" (click)="deleteAdmin(a.id)" *ngIf="currentUser && a.email !== currentUser.email">
+                  <i class="fas fa-user-minus"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section *ngIf="view === 'comments'" class="fade-in">
+      <div class="table-card">
+        <table class="premium-table">
+          <thead>
+            <tr><th>Ürün</th><th>Müşteri</th><th>Yorum</th><th>Tarih</th><th>Durum</th><th class="text-right">İşlem</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of comments">
+              <td><span class="tag">{{c.product}}</span></td>
+              <td><strong>{{c.user}}</strong></td>
+              <td><p style="max-width: 300px; font-style: italic; font-size: 13px; color: #64748b;">"{{c.text}}"</p></td>
+              <td>{{c.date}}</td>
+              <td><span class="tag" [ngClass]="c.status === 'approved' ? 'cat-spor' : 'cat-kitap'">{{c.status}}</span></td>
+              <td class="text-right">
+                <button *ngIf="c.status === 'pending'" class="btn-icon approve" (click)="approveComment(c.id)"><i class="fas fa-check"></i></button>
+                <button class="btn-icon delete" (click)="rejectComment(c.id)"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section *ngIf="view === 'addProduct'" class="fade-in">
+      <div class="product-form-card">
+        <div class="form-title">Yeni Ürün Bilgileri</div>
+        <div class="form-grid">
+          <div class="form-group full-width"><label>Ürün Adı</label><input type="text" [(ngModel)]="newProduct.name"></div>
+          <div class="form-group"><label>Kategori</label><select [(ngModel)]="newProduct.category"><option *ngFor="let cat of categories" [value]="cat">{{cat}}</option></select></div>
+          <div class="form-group"><label>Fiyat (₺)</label><input type="number" [(ngModel)]="newProduct.price"></div>
+          <div class="form-group"><label>Stok</label><input type="number" [(ngModel)]="newProduct.stock"></div>
+          
+          <div class="form-group full-width">
+            <label>Ürün Görseli</label>
+            <div class="custom-file-upload" style="display: flex; flex-direction: column; gap: 8px;">
+              <input type="file" (change)="onFileSelected($event)" class="premium-input" accept="image/*" style="padding: 8px;">
+              <small style="color: #64748b;">Veya görsel linki yapıştırın:</small>
+              <input type="text" [(ngModel)]="newProduct.img" class="premium-input" placeholder="https://...">
+            </div>
+          </div>
+        </div>
+        
+        <div class="image-preview-container" style="margin-top: 20px; text-align: center;">
+          <label style="display: block; margin-bottom: 10px; font-weight: 600;">Resim Önizleme</label>
+          <img [src]="newProduct.img || 'https://via.placeholder.com/300x200?text=Nexus+Core'" 
+               class="img-fluid rounded border" style="max-height: 200px; width: auto; object-fit: contain; border: 2px solid #e2e8f0; border-radius: 12px;">
+        </div>
+
+        <div class="form-actions" style="margin-top: 20px;">
+          <button class="q-btn" (click)="view = 'products'">Vazgeç</button>
+          <button class="q-btn primary" (click)="saveProduct()">Kaydet</button>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="view === 'edit-product' && editingProduct" class="fade-in">
+      <div class="product-form-card">
+        <div class="form-title">Ürünü Güncelle: {{editingProduct.name}}</div>
+        <div class="form-grid">
+          <div class="form-group full-width"><label>Ürün Adı</label><input type="text" [(ngModel)]="editingProduct.name"></div>
+          <div class="form-group"><label>Kategori</label><select [(ngModel)]="editingProduct.category"><option *ngFor="let cat of categories" [value]="cat">{{cat}}</option></select></div>
+          <div class="form-group"><label>Fiyat (₺)</label><input type="number" [(ngModel)]="editingProduct.price"></div>
+          <div class="form-group"><label>Stok</label><input type="number" [(ngModel)]="editingProduct.stock"></div>
+          
+          <div class="form-group full-width">
+            <label>Ürün Görselini Güncelle</label>
+            <div class="custom-file-upload" style="display: flex; flex-direction: column; gap: 8px;">
+              <input type="file" (change)="onFileSelected($event)" class="premium-input" accept="image/*" style="padding: 8px;">
+              <small style="color: #64748b;">Mevcut veya yeni görsel linki:</small>
+              <input type="text" [(ngModel)]="editingProduct.img" class="premium-input">
+            </div>
+          </div>
+        </div>
+        
+        <div class="image-preview-container" style="margin-top: 20px; text-align: center;">
+          <label style="display: block; margin-bottom: 10px; font-weight: 600;">Görsel Önizleme</label>
+          <img [src]="editingProduct.img || 'https://via.placeholder.com/300x200?text=Nexus+Core'" 
+               class="img-fluid rounded border" style="max-height: 200px; width: auto; object-fit: contain; border: 2px solid #e2e8f0; border-radius: 12px;">
+        </div>
+
+        <div class="form-actions" style="margin-top: 20px;">
+          <button class="q-btn" (click)="view = 'products'">İptal</button>
+          <button class="q-btn primary" (click)="updateProduct()">Değişiklikleri Kaydet</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="modal-overlay" *ngIf="selectedOrder" (click)="selectedOrder = null">
+    <div class="modal-content fade-in" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="header-info">
+          <h3>Sipariş Detayı: <span style="color: #6366f1;">{{selectedOrder.id || selectedOrder.no}}</span></h3>
+          <p>{{selectedOrder.date}} tarihinde oluşturuldu</p>
+        </div>
+        <button class="close-btn" (click)="selectedOrder = null">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="order-grid">
+          <div class="order-section"><label><i class="fas fa-user"></i> Müşteri Bilgisi</label><p><strong>{{selectedOrder.user || selectedOrder.customer}}</strong></p></div>
+          <div class="order-section"><label><i class="fas fa-box"></i> Ürün Detayı</label><p>{{selectedOrder.items || selectedOrder.content}}</p></div>
+          <div class="order-section"><label><i class="fas fa-money-bill-wave"></i> Toplam Tutar</label><p style="font-size: 20px; color: #10b981; font-weight: 800;">{{selectedOrder.total | number}} ₺</p></div>
+          <div class="order-section">
+            <label><i class="fas fa-info-circle"></i> Durum</label>
+            <span class="tag" [ngClass]="{'cat-elektronik': selectedOrder.status === 'Kargolandı','cat-aksesuar': selectedOrder.status === 'Hazırlanıyor','cat-spor': selectedOrder.status === 'Teslim Edildi'}">{{selectedOrder.status}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="q-btn" style="background: #f1f5f9; color: #475569;" (click)="selectedOrder = null">Kapat</button>
+        <button class="q-btn primary" (click)="updateOrderStatus(selectedOrder.id || selectedOrder.no, 'Teslim Edildi'); selectedOrder = null">Teslim Edildi İşaretle</button>
+      </div>
+    </div>
+  </div>
+
+</div>
