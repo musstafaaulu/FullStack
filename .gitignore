@@ -1,0 +1,96 @@
+# =========================
+# .NET / Visual Studio
+# =========================
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+Debug/
+Release/
+x64/
+x86/
+[Bb]uild/
+
+# Visual Studio cache
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.production.local
+
+# ASP.NET Core
+appsettings.Development.json
+appsettings.Local.json
+
+# IIS Express
+.iis/
+
+# =========================
+# Angular
+# =========================
+node_modules/
+dist/
+.angular/
+.tmp/
+out-tsc/
+
+# Angular cache
+.cache/
+
+# npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Publish
+# =========================
+publish/
+
+# =========================
+# Temporary files
+# =========================
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# =========================
+# NuGet
+# =========================
+*.nupkg
+packages/
+
+# =========================
+# Rider / Resharper
+# =========================
+_ReSharper*/
+*.DotSettings.user
+
+# =========================
+# Database files
+# =========================
+*.mdf
+*.ldf
+
+# =========================
+# Test / Coverage
+# =========================
+coverage/
+TestResults/
