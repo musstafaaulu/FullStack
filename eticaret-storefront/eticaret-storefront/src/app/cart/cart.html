@@ -1,0 +1,272 @@
+<!-- NAV -->
+<nav style="background:#1e293b; padding:16px 32px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+  <a routerLink="/home" style="color:#94a3b8; text-decoration:none; display:flex; align-items:center; gap:8px; font-weight:600; font-size:14px;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">
+    <i class="fas fa-arrow-left"></i> Alışverişe Devam
+  </a>
+  <span style="color:white; font-weight:900; font-size:20px; letter-spacing:2px;">NEXUS</span>
+  <span style="color:#6366f1; font-size:13px; font-weight:700;" *ngIf="cartItems.length > 0">
+    <i class="fas fa-shopping-bag"></i> {{cartItems.length}} ürün
+  </span>
+  <span *ngIf="cartItems.length === 0"></span>
+</nav>
+
+<!-- BAŞARI -->
+<div *ngIf="orderSuccess" style="position:fixed; inset:0; background:rgba(15,23,42,0.85); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(4px);">
+  <div style="background:white; border-radius:24px; padding:48px; text-align:center; box-shadow:0 25px 50px rgba(0,0,0,0.2); max-width:400px;">
+    <div style="width:80px; height:80px; background:linear-gradient(135deg,#22c55e,#16a34a); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; box-shadow:0 8px 24px rgba(34,197,94,0.3);">
+      <i class="fas fa-check" style="color:white; font-size:36px;"></i>
+    </div>
+    <h2 style="font-size:24px; font-weight:800; color:#1e293b; margin-bottom:8px;">Sipariş Oluşturuldu!</h2>
+    <p style="color:#64748b; font-size:15px; margin-bottom:12px;">Siparişiniz başarıyla alındı.</p>
+    <div *ngIf="paymentMethod === 'transfer'" style="background:#eff6ff; border-radius:12px; padding:14px; text-align:left; font-size:13px; color:#1e40af; margin-bottom:8px;">
+      <strong><i class="fas fa-university"></i> Havale Bilgileri:</strong><br>
+      IBAN: {{IBAN}}<br>Banka: {{BANK_NAME}}<br>Ad: {{ACCOUNT_NAME}}
+    </div>
+    <p style="color:#94a3b8; font-size:13px;">Ana sayfaya yönlendiriliyorsunuz...</p>
+  </div>
+</div>
+
+<!-- SEPET -->
+<div *ngIf="!orderSuccess" style="min-height:calc(100vh - 60px); background:#f8fafc; padding:32px 16px;">
+
+  <!-- BOŞ SEPET -->
+  <div *ngIf="cartItems.length === 0" style="max-width:480px; margin:80px auto; text-align:center;">
+    <div style="width:120px; height:120px; background:linear-gradient(135deg,#e0e7ff,#c7d2fe); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px;">
+      <i class="fas fa-shopping-bag" style="font-size:48px; color:#6366f1;"></i>
+    </div>
+    <h2 style="font-size:28px; font-weight:800; color:#1e293b; margin-bottom:12px;">Sepetiniz boş</h2>
+    <p style="color:#94a3b8; font-size:16px; margin-bottom:32px;">Henüz sepetinize ürün eklemediniz.</p>
+    <a routerLink="/home" style="background:linear-gradient(135deg,#6366f1,#a855f7); color:white; text-decoration:none; padding:14px 32px; border-radius:14px; font-weight:700; font-size:15px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 8px 20px rgba(99,102,241,0.3);">
+      <i class="fas fa-store"></i> Alışverişe Başla
+    </a>
+  </div>
+
+  <!-- DOLU SEPET -->
+  <div *ngIf="cartItems.length > 0" style="max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1fr 380px; gap:24px; align-items:start;">
+
+    <!-- SOL -->
+    <div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2 style="font-size:22px; font-weight:800; color:#1e293b; margin:0;">Sepetim <span style="color:#6366f1;">({{cartItems.length}})</span></h2>
+        <button (click)="clearCart()" style="background:#fee2e2; color:#ef4444; border:none; padding:8px 16px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700;">
+          <i class="fas fa-trash"></i> Boşalt
+        </button>
+      </div>
+
+      <!-- Kargo progress -->
+      <div *ngIf="!isFreeShipping" style="background:linear-gradient(135deg,#eff6ff,#dbeafe); border-radius:16px; padding:16px 20px; margin-bottom:16px; border:1px solid #bfdbfe;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+          <i class="fas fa-truck" style="color:#3b82f6; font-size:18px;"></i>
+          <span style="font-size:14px; color:#1e40af; font-weight:600;"><strong>{{amountToFreeShipping | number:'1.0-0'}} ₺</strong> daha ekle, kargo ücretsiz!</span>
+        </div>
+        <div style="background:#bfdbfe; border-radius:99px; height:8px; overflow:hidden;">
+          <div [style.width.%]="(totalPrice / 500) * 100" style="background:linear-gradient(90deg,#3b82f6,#6366f1); height:100%; border-radius:99px; transition:width 0.4s;"></div>
+        </div>
+      </div>
+      <div *ngIf="isFreeShipping" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7); border-radius:16px; padding:14px 20px; margin-bottom:16px; border:1px solid #86efac; display:flex; align-items:center; gap:10px;">
+        <i class="fas fa-check-circle" style="color:#22c55e; font-size:20px;"></i>
+        <span style="font-weight:700; color:#15803d;">🎉 Ücretsiz kargo kazandınız!</span>
+      </div>
+
+      <!-- Ürünler -->
+      <div *ngFor="let item of cartItems" style="background:white; border-radius:20px; padding:20px; margin-bottom:12px; display:flex; gap:16px; align-items:center; box-shadow:0 2px 12px rgba(0,0,0,0.04); border:1px solid #f1f5f9;">
+        <img [src]="item.imageUrl" [alt]="item.name" style="width:80px; height:80px; object-fit:cover; border-radius:14px; flex-shrink:0;">
+        <div style="flex:1; min-width:0;">
+          <p style="font-size:11px; color:#94a3b8; margin:0 0 4px; font-weight:600; text-transform:uppercase;">{{item.category}}</p>
+          <h3 style="font-size:15px; font-weight:700; color:#1e293b; margin:0 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{item.name}}</h3>
+          <p style="font-size:13px; color:#94a3b8; margin:0;" *ngIf="item.brandName">{{item.brandName}}</p>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px; flex-shrink:0;">
+          <span style="font-size:18px; font-weight:800; color:#6366f1;">{{item.price * item.quantity | number:'1.0-0'}} ₺</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="display:flex; align-items:center; background:#f1f5f9; border-radius:12px; overflow:hidden;">
+              <button (click)="decreaseQty(item)" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; font-size:18px; color:#475569; font-weight:700; display:flex; align-items:center; justify-content:center;">−</button>
+              <span style="min-width:28px; text-align:center; font-weight:700; font-size:14px; color:#1e293b;">{{item.quantity}}</span>
+              <button (click)="increaseQty(item)" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; font-size:18px; color:#475569; font-weight:700; display:flex; align-items:center; justify-content:center;">+</button>
+            </div>
+            <button (click)="removeItem(item.id || item.name)" style="width:32px; height:32px; background:#fee2e2; border:none; border-radius:10px; cursor:pointer; color:#ef4444; font-size:13px; display:flex; align-items:center; justify-content:center;">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ✅ ÖDEME YÖNTEMİ SEÇİMİ -->
+      <div style="background:white; border-radius:20px; padding:24px; margin-top:8px; box-shadow:0 2px 12px rgba(0,0,0,0.04); border:1px solid #f1f5f9;">
+        <h3 style="font-size:16px; font-weight:800; color:#1e293b; margin:0 0 16px; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-credit-card" style="color:#6366f1;"></i> Ödeme Yöntemi
+        </h3>
+
+        <!-- Seçim kartları -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;">
+          <div (click)="paymentMethod='card'"
+               [style.border]="paymentMethod==='card' ? '2px solid #6366f1' : '2px solid #e2e8f0'"
+               [style.background]="paymentMethod==='card' ? '#f5f3ff' : 'white'"
+               style="padding:16px 12px; border-radius:14px; cursor:pointer; text-align:center; transition:all 0.2s;">
+            <i class="fas fa-credit-card" style="font-size:24px; color:#6366f1; display:block; margin-bottom:8px;"></i>
+            <div style="font-size:13px; font-weight:700; color:#1e293b;">Kredi Kartı</div>
+            <div style="font-size:11px; color:#94a3b8;">Güvenli ödeme</div>
+          </div>
+          <div (click)="paymentMethod='transfer'"
+               [style.border]="paymentMethod==='transfer' ? '2px solid #3b82f6' : '2px solid #e2e8f0'"
+               [style.background]="paymentMethod==='transfer' ? '#eff6ff' : 'white'"
+               style="padding:16px 12px; border-radius:14px; cursor:pointer; text-align:center; transition:all 0.2s;">
+            <i class="fas fa-university" style="font-size:24px; color:#3b82f6; display:block; margin-bottom:8px;"></i>
+            <div style="font-size:13px; font-weight:700; color:#1e293b;">Havale / EFT</div>
+            <div style="font-size:11px; color:#94a3b8;">Banka transferi</div>
+          </div>
+          <div (click)="paymentMethod='door'"
+               [style.border]="paymentMethod==='door' ? '2px solid #f59e0b' : '2px solid #e2e8f0'"
+               [style.background]="paymentMethod==='door' ? '#fffbeb' : 'white'"
+               style="padding:16px 12px; border-radius:14px; cursor:pointer; text-align:center; transition:all 0.2s;">
+            <i class="fas fa-hand-holding-usd" style="font-size:24px; color:#f59e0b; display:block; margin-bottom:8px;"></i>
+            <div style="font-size:13px; font-weight:700; color:#1e293b;">Kapıda Ödeme</div>
+            <div style="font-size:11px; color:#f59e0b; font-weight:600;">+50 ₺ hizmet bedeli</div>
+          </div>
+        </div>
+
+        <!-- KREDİ KARTI FORMU -->
+        <div *ngIf="paymentMethod === 'card'" style="background:#f8fafc; border-radius:16px; padding:20px; border:1px solid #e2e8f0;">
+          <div style="display:grid; grid-template-columns:1fr; gap:12px;">
+            <div>
+              <label style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">Kart Numarası</label>
+              <div style="position:relative;">
+                <input [value]="cardNumber" (input)="formatCardNumber($event)" placeholder="0000 0000 0000 0000" maxlength="19"
+                  style="width:100%; padding:12px 16px 12px 44px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:15px; font-family:monospace; letter-spacing:1px; outline:none; box-sizing:border-box; background:white;">
+                <i class="fas fa-credit-card" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#94a3b8;"></i>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">Kart Sahibi</label>
+              <input [(ngModel)]="cardName" placeholder="AD SOYAD" style="width:100%; padding:12px 16px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:14px; text-transform:uppercase; outline:none; box-sizing:border-box; background:white;">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div>
+                <label style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">Son Kullanma</label>
+                <input [value]="cardExpiry" (input)="formatExpiry($event)" placeholder="MM/YY" maxlength="5"
+                  style="width:100%; padding:12px 16px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:14px; font-family:monospace; outline:none; box-sizing:border-box; background:white;">
+              </div>
+              <div>
+                <label style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">CVV</label>
+                <input [(ngModel)]="cardCvc" placeholder="•••" maxlength="3" type="password"
+                  style="width:100%; padding:12px 16px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:14px; font-family:monospace; outline:none; box-sizing:border-box; background:white;">
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:12px; display:flex; align-items:center; gap:6px; color:#94a3b8; font-size:12px;">
+            <i class="fas fa-lock" style="color:#22c55e;"></i> 256-bit SSL ile şifrelenmiş güvenli ödeme
+          </div>
+        </div>
+
+        <!-- HAVALE BİLGİLERİ -->
+        <div *ngIf="paymentMethod === 'transfer'" style="background:#eff6ff; border-radius:16px; padding:20px; border:1px solid #bfdbfe;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+            <i class="fas fa-info-circle" style="color:#3b82f6; font-size:18px;"></i>
+            <span style="font-size:14px; font-weight:700; color:#1e40af;">Aşağıdaki hesaba havale/EFT yapınız</span>
+          </div>
+          <div style="display:grid; gap:10px;">
+            <div style="background:white; border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border:1px solid #dbeafe;">
+              <span style="font-size:12px; color:#64748b; font-weight:600;">BANKA</span>
+              <span style="font-size:14px; font-weight:700; color:#1e293b;">{{BANK_NAME}}</span>
+            </div>
+            <div style="background:white; border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border:1px solid #dbeafe;">
+              <span style="font-size:12px; color:#64748b; font-weight:600;">HESAP ADI</span>
+              <span style="font-size:14px; font-weight:700; color:#1e293b;">{{ACCOUNT_NAME}}</span>
+            </div>
+            <div style="background:white; border-radius:12px; padding:14px 16px; border:1px solid #dbeafe;">
+              <span style="font-size:12px; color:#64748b; font-weight:600; display:block; margin-bottom:6px;">IBAN</span>
+              <span style="font-size:16px; font-weight:800; color:#1e40af; font-family:monospace; letter-spacing:1px;">{{IBAN}}</span>
+            </div>
+          </div>
+          <p style="font-size:12px; color:#64748b; margin:12px 0 0; font-style:italic;">
+            <i class="fas fa-exclamation-circle" style="color:#f59e0b;"></i>
+            Havale açıklamasına sipariş numaranızı yazmayı unutmayın.
+          </p>
+        </div>
+
+        <!-- KAPIDA ÖDEME -->
+        <div *ngIf="paymentMethod === 'door'" style="background:#fffbeb; border-radius:16px; padding:20px; border:1px solid #fde68a;">
+          <div style="display:flex; align-items:flex-start; gap:12px;">
+            <i class="fas fa-truck" style="color:#f59e0b; font-size:24px; margin-top:2px;"></i>
+            <div>
+              <div style="font-size:14px; font-weight:700; color:#92400e; margin-bottom:6px;">Kapıda Ödeme Seçildi</div>
+              <p style="font-size:13px; color:#78350f; margin:0 0 8px;">Siparişiniz kapınıza ulaştığında nakit veya pos cihazıyla ödeme yapabilirsiniz.</p>
+              <div style="background:white; border-radius:10px; padding:10px 14px; display:inline-flex; align-items:center; gap:8px; border:1px solid #fde68a;">
+                <i class="fas fa-plus-circle" style="color:#f59e0b;"></i>
+                <span style="font-size:13px; font-weight:700; color:#92400e;">Kapıda ödeme hizmet bedeli: <strong>+50 ₺</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAĞ: ÖZET -->
+    <div style="position:sticky; top:24px;">
+      <div style="background:white; border-radius:24px; padding:28px; box-shadow:0 4px 24px rgba(0,0,0,0.08); border:1px solid #e2e8f0;">
+        <h3 style="font-size:18px; font-weight:800; color:#1e293b; margin:0 0 24px; padding-bottom:16px; border-bottom:2px solid #f1f5f9;">Sipariş Özeti</h3>
+
+        <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+          <span style="color:#64748b; font-size:14px;">Ara Toplam</span>
+          <span style="font-weight:600; color:#1e293b;">{{totalPrice | number:'1.0-0'}} ₺</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <span style="color:#64748b; font-size:14px;">Kargo</span>
+          <span *ngIf="isFreeShipping" style="color:#22c55e; font-weight:700;"><i class="fas fa-check-circle"></i> Ücretsiz</span>
+          <span *ngIf="!isFreeShipping" style="font-weight:600; color:#1e293b;">{{shippingFee | number:'1.2-2'}} ₺</span>
+        </div>
+        <div *ngIf="!isFreeShipping" style="font-size:12px; color:#94a3b8; margin-bottom:12px; text-align:right;">500₺ üzeri kargo ücretsiz</div>
+        <div *ngIf="isFreeShipping" style="margin-bottom:12px;"></div>
+
+        <!-- Kapıda ödeme ücreti -->
+        <div *ngIf="paymentMethod === 'door'" style="display:flex; justify-content:space-between; margin-bottom:12px; background:#fffbeb; padding:10px 14px; border-radius:10px; border:1px solid #fde68a;">
+          <span style="color:#92400e; font-size:14px; font-weight:600;"><i class="fas fa-hand-holding-usd"></i> Kapıda Ödeme</span>
+          <span style="color:#92400e; font-weight:700;">+{{DOOR_PAYMENT_FEE}} ₺</span>
+        </div>
+
+        <div *ngIf="discount > 0" style="display:flex; justify-content:space-between; margin-bottom:12px; background:#f0fdf4; padding:10px 14px; border-radius:10px;">
+          <span style="color:#16a34a; font-size:14px; font-weight:600;"><i class="fas fa-tag"></i> Kupon (%{{discountRate}})</span>
+          <span style="color:#16a34a; font-weight:700;">-{{discount | number:'1.0-0'}} ₺</span>
+        </div>
+
+        <!-- Kupon -->
+        <div style="display:flex; gap:8px; margin-bottom:20px;">
+          <input type="text" [(ngModel)]="couponCode" placeholder="Kupon kodu..." [disabled]="discount > 0"
+            style="flex:1; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:14px; outline:none; background:#f8fafc;">
+          <button (click)="applyCoupon()" *ngIf="discount === 0"
+            style="background:#6366f1; color:white; border:none; padding:10px 16px; border-radius:12px; cursor:pointer; font-weight:700; font-size:13px;">Uygula</button>
+          <button (click)="removeCoupon()" *ngIf="discount > 0"
+            style="background:#fee2e2; color:#ef4444; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700;"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Toplam -->
+        <div style="display:flex; justify-content:space-between; padding:16px 0; border-top:2px solid #f1f5f9; margin-bottom:20px;">
+          <span style="font-size:16px; font-weight:700; color:#1e293b;">Toplam</span>
+          <span style="font-size:24px; font-weight:900; color:#6366f1;">{{finalTotal | number:'1.2-2'}} ₺</span>
+        </div>
+
+        <!-- Seçili ödeme yöntemi özeti -->
+        <div style="background:#f8fafc; border-radius:12px; padding:10px 14px; margin-bottom:16px; display:flex; align-items:center; gap:10px;">
+          <i class="fas" [ngClass]="paymentMethod==='card' ? 'fa-credit-card' : paymentMethod==='transfer' ? 'fa-university' : 'fa-hand-holding-usd'"
+             [style.color]="paymentMethod==='card' ? '#6366f1' : paymentMethod==='transfer' ? '#3b82f6' : '#f59e0b'"
+             style="font-size:18px;"></i>
+          <span style="font-size:13px; font-weight:700; color:#475569;">
+            {{paymentMethod==='card' ? 'Kredi Kartı ile Ödeme' : paymentMethod==='transfer' ? 'Havale / EFT' : 'Kapıda Ödeme'}}
+          </span>
+        </div>
+
+        <button (click)="completeOrder()" [disabled]="isOrdering"
+          style="width:100%; padding:16px; background:linear-gradient(135deg,#6366f1,#a855f7); color:white; border:none; border-radius:16px; font-size:16px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 8px 20px rgba(99,102,241,0.3);"
+          [style.opacity]="isOrdering ? '0.7' : '1'">
+          <i class="fas" [ngClass]="isOrdering ? 'fa-spinner fa-spin' : 'fa-lock'"></i>
+          {{ isOrdering ? 'İşleniyor...' : 'Siparişi Onayla' }}
+        </button>
+
+        <div style="text-align:center; margin-top:12px; color:#94a3b8; font-size:12px; font-weight:600;">
+          <i class="fas fa-shield-alt" style="color:#22c55e;"></i> SSL ile korunan güvenli alışveriş
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

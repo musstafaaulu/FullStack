@@ -1,9 +1,9 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core'; 
-import { CommonModule } from '@angular/common'; 
+import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../services/data.service';
 import { Router } from '@angular/router';
-import Chart from 'chart.js/auto'; 
+import Chart from 'chart.js/auto';
 
 @Component({
   selector: 'app-admin',
@@ -12,606 +12,505 @@ import Chart from 'chart.js/auto';
   standalone: true,
   imports: [CommonModule, FormsModule]
 })
-export class AdminComponent implements OnInit, AfterViewInit 
-{ 
-  // --- GÖRÜNÜM KONTROLLERİ & STATE ---
+export class AdminComponent implements OnInit, AfterViewInit {
+
   view: string = 'dashboard';
-  searchTerm: string = ''; 
-  newCategoryName: string = ''; 
-  selectedOrder: any = null; 
-  editingProduct: any = null; 
+  searchTerm: string = '';
+  newCategoryName: string = '';
+  newCategoryDescription: string = '';
+  selectedOrder: any = null;
+  editingProduct: any = null;
   public salesChart: any;
-  toasts: any[] = []; 
+  toasts: any[] = [];
   isDarkMode: boolean = false;
+  selectedCategory: string = 'Hepsi';
+  sortType: string = 'newest';
+  today = new Date();
 
-  // --- KULLANICI VE YETKİ ---
   currentUser: any = { name: '', role: '' };
-  
-  admins: any[] = [
-    { 
-      id: 100, 
-      name: 'Mustafa Ulu', 
-      email: 'mustafa@admin.com', 
-      pass: '123456', 
-      role: 'Super Admin' 
-    },
-    { 
-      id: 101, 
-      name: 'Sanem Ulu', 
-      email: 'sanem@admin.com', 
-      pass: '12345', 
-      role: 'Operations Admin' 
-    },
-    { 
-      id: 102, 
-      name: 'Yılmaz Ulu', 
-      email: 'yilmaz@admin.com', 
-      pass: '12345', 
-      role: 'Sales Admin' 
-    },
-    { 
-      id: 103, 
-      name: 'Can Ulu', 
-      email: 'can@admin.com', 
-      pass: '12345', 
-      role: 'Content Admin' 
-    }
-  ];
 
+  admins: any[] = [];
   users: any[] = [];
-
-  // --- ÜRÜN VE KATEGORİ VERİLERİ ---
   products: any[] = [];
-  categories: string[] = ['Ev-yaşam', 'Elektronik', 'Giyim', 'Aksesuar', 'Kitap', 'Spor'];
-  
+  categories: any[] = [];
+  brands: any[] = [];
   orders: any[] = [];
+  comments: any[] = [];
+  systemLogs: any[] = [];
+  employees: any[] = [];
+  banners: any[] = [];
 
-  comments: any[] = [
-    { 
-      id: 201, 
-      user: 'Zeynep', 
-      text: 'Ürünlerin kalitesi muazzam, kargo çok hızlıydı.', 
-      status: 'pending', 
-      date: '17.02.2026', 
-      product: 'Nexus Watch' 
-    },
-    { 
-      id: 202, 
-      user: 'Ahmet', 
-      text: 'Klavye tuşları biraz sert geldi ama idare eder.', 
-      status: 'pending', 
-      date: '16.02.2026', 
-      product: 'Nexus Pro Keyboard' 
-    }
-  ];
+  newEmployee: any = { fullName: '', email: '', password: '', role: 'Employee' };
+  employeeSaving: boolean = false;
+  uploadingImage: boolean = false;
 
-  systemLogs: any[] = [
-    { time: '16:50', user: 'Mustafa Ulu', action: 'Admin Paneli başlatıldı', type: 'success' },
-    { time: '16:48', user: 'System', action: 'Veritabanı senkronizasyonu tamam', type: 'info' },
-    { time: '16:45', user: 'Admin', action: 'Stok güncellemesi yapıldı', type: 'warning' }
-  ];
+  // ✅ Banner form
+  newBanner: any = { title: '', imageUrl: '', link: '', isActive: true, order: 0 };
+  bannerSaving: boolean = false;
 
-  stats = { 
-    monthlyRevenue: 0, 
-    criticalStock: 0, 
-    totalCustomers: 0 
+  stats = { monthlyRevenue: 0, criticalStock: 0, totalCustomers: 0 };
+
+  newProduct: any = {
+    name: '', price: null, category: '', stock: null, img: '', description: '', brandId: null
   };
 
-  newProduct: any = { 
-    name: '', 
-    price: null, 
-    category: 'Elektronik', 
-    stock: null, 
-    img: '' 
-  };
+  newBrand: any = { name: '', description: '', logoUrl: '' };
 
-  messages: any[] = [
-    { 
-      id: 1, 
-      sender: 'Zeynep Kaya', 
-      subject: 'Kargo Takibi', 
-      content: 'Merhaba, siparişim nerede?', 
-      date: '19.02.2026', 
-      status: 'unread' 
-    },
-    { 
-      id: 2, 
-      sender: 'Ahmet Demir', 
-      subject: 'İade Hakkında', 
-      content: 'Klavye beklediğimden büyük geldi, iade edebilir miyim?', 
-      date: '18.02.2026', 
-      status: 'read' 
-    }
-  ];
+  constructor(public dataService: DataService, public router: Router) {}
 
-  // --- KUPON SİSTEMİ VERİLERİ ---
-  coupons: any[] = [];
-  newCoupon = { 
-    code: '', 
-    discount: null, 
-    type: 'percentage' 
-  };
-
-  constructor(private dataService: DataService, private router: Router) 
-  {
+  get isSuperAdmin(): boolean {
+    return this.currentUser?.role === 'Super Admin';
   }
 
-  ngOnInit() 
-  {
-    // 1. Kullanıcı Kontrolü
-    const savedUser = localStorage.getItem('currentUser') || localStorage.getItem('loggedInUser');
-    
-    if (savedUser) 
-    {
+  ngOnInit() {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
       this.currentUser = JSON.parse(savedUser);
-      if (this.currentUser.role === 'user') 
-      {
-        this.router.navigate(['/home']);
-        return;
+      this.currentUser.name = this.currentUser.fullName || this.currentUser.name || 'Admin';
+      const role = this.currentUser.role?.toLowerCase();
+      if (!role || role === 'user' || role === 'customer') {
+        this.router.navigate(['/home']); return;
       }
-    } 
-    else 
-    {
-      this.router.navigate(['/login']);
-      return;
+    } else {
+      this.router.navigate(['/login']); return;
     }
 
-    // 2. Yorum Verilerini Yükle
-    const savedComments = localStorage.getItem('productComments');
-    if (savedComments) 
-    { 
-      this.comments = JSON.parse(savedComments); 
-    }
-
-    // 3. Kupon Verilerini Yükle
-    const savedCoupons = localStorage.getItem('activeCoupons');
-    if (savedCoupons) 
-    { 
-      this.coupons = JSON.parse(savedCoupons); 
-    }
-
-    // 4. Tema Tercihini Yükle
     const savedTheme = localStorage.getItem('theme');
     this.isDarkMode = (savedTheme === 'dark');
-    
-    if (this.isDarkMode) 
-    {
-      document.body.classList.add('dark-theme');
-    }
+    if (this.isDarkMode) document.body.classList.add('dark-theme');
 
-    // 5. Ürün Verilerini API'den Dinle (Gerçek Zamanlı Senkronizasyon)
-    this.dataService.currentProducts.subscribe(data => {
-      this.products = data;
-      this.refreshStats(); 
-      this.checkCriticalStocks(); 
+    this.loadAllData();
+  }
+
+  ngAfterViewInit() {
+    setTimeout(() => this.initChart(), 500);
+  }
+
+  loadAllData() {
+    this.loadProducts();
+    this.loadOrders();
+    this.loadUsers();
+    this.loadComments();
+    this.loadCategories();
+    this.loadBrands();
+    this.loadEmployees();
+    this.loadBanners();
+  }
+
+  loadProducts() {
+    this.dataService.getProducts().subscribe({
+      next: (data: any) => {
+        const list = data?.data?.items || data?.data?.data || data?.data || data || [];
+        this.products = list.map((p: any) => ({ ...p, img: p.img || p.imageUrl || '' }));
+        this.refreshStats();
+        this.checkCriticalStocks();
+      },
+      error: (err) => console.error('Ürünler yüklenirken hata', err)
     });
-    this.dataService.refreshProducts(); // API'den ilk çekimi başlat
-
-    // 6. Sipariş Verilerini Yükle
-    const savedOrders = localStorage.getItem('orders');
-    
-    if (savedOrders) 
-    {
-      this.orders = JSON.parse(savedOrders);
-    } 
-    else 
-    {
-      this.orders = [
-        { no: '#ORD-9921', customer: 'Mustafa', total: 1250, status: 'Hazırlanıyor', date: '17.02.2026', content: 'Nexus Watch (1)' },
-        { no: '#ORD-7721', customer: 'Biraderim', total: 2450.50, status: 'Kargolandı', date: '17.02.2026', content: 'Nexus Pro Keyboard (1)' }
-      ];
-      localStorage.setItem('orders', JSON.stringify(this.orders));
-    }
-
-    // 7. Mesaj Verilerini Yükle
-    const savedMessages = localStorage.getItem('messages');
-    if (savedMessages) 
-    { 
-      this.messages = JSON.parse(savedMessages); 
-    }
-
-    // 8. Başlangıç Fonksiyonlarını Çalıştır
-    this.generateFakeUsers(); 
-    this.refreshStats(); 
-    this.checkCriticalStocks(); 
   }
 
-  ngAfterViewInit() 
-  {
-    setTimeout(() => 
-    {
-      this.initChart();
-    }, 500);
-  }
-
-  showToast(message: string, type: 'success' | 'danger' | 'warning' | 'info' = 'success') 
-  {
-    const id = Date.now();
-    this.toasts.push({ id, message, type });
-    
-    setTimeout(() => 
-    { 
-      this.toasts = this.toasts.filter(t => t.id !== id); 
-    }, 3000);
-  }
-
-  addLog(action: string, type: 'success' | 'info' | 'warning' | 'danger') 
-  {
-    const now = new Date();
-    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    
-    this.systemLogs.unshift({ 
-      time: timeStr, 
-      user: this.currentUser.fullName || this.currentUser.name || 'Admin', 
-      action: action, 
-      type: type 
+  loadOrders() {
+    this.dataService.getOrders().subscribe({
+      next: (data: any) => {
+        this.orders = data?.data?.items || data?.data || data || [];
+        this.refreshStats();
+      },
+      error: () => {}
     });
-    
-    if (this.systemLogs.length > 20) 
-    {
-      this.systemLogs.pop();
+  }
+
+  loadUsers() {
+    this.dataService.getUsers().subscribe({
+      next: (data: any) => { this.users = data?.data || data || []; this.refreshStats(); },
+      error: () => {}
+    });
+  }
+
+  loadComments() {
+    this.dataService.getComments().subscribe({
+      next: (data: any) => this.comments = data?.data?.items || data?.data || data || [],
+      error: () => {}
+    });
+  }
+
+  loadCategories() {
+    this.dataService.getCategories().subscribe({
+      next: (data: any) => { this.categories = data?.data || data || []; },
+      error: () => { this.categories = []; }
+    });
+  }
+
+  loadBrands() {
+    this.dataService.getBrands().subscribe({
+      next: (data: any) => this.brands = data?.data || data || [],
+      error: () => {}
+    });
+  }
+
+  loadEmployees() {
+    this.dataService.getUsers().subscribe({
+      next: (data: any) => {
+        const all = data?.data || data || [];
+        this.employees = all.filter((u: any) => u.role === 'Employee' || u.role === 'Admin');
+      },
+      error: () => {}
+    });
+  }
+
+  // ✅ BANNER
+  loadBanners() {
+    this.dataService.getBanners().subscribe({
+      next: (data: any) => this.banners = data?.data || data || [],
+      error: () => {}
+    });
+  }
+
+  saveBanner() {
+    if (!this.newBanner.title.trim() || !this.newBanner.imageUrl.trim()) {
+      this.showToast('Başlık ve Görsel URL zorunlu!', 'danger'); return;
     }
-  }
-
-  refreshStats() 
-  {
-    this.stats.monthlyRevenue = this.orders.reduce((sum, order) => sum + Number(order.total), 0);
-    this.stats.criticalStock = this.products.filter(p => p.stock < 10).length;
-    this.stats.totalCustomers = this.users.length;
-    
-    if (this.stats.criticalStock > 5) 
-    {
-      this.showToast('Uyarı: Kritik stok seviyesindeki ürünler artıyor!', 'warning');
-    }
-  }
-
-  readMessage(msg: any) 
-  {
-    msg.status = 'read';
-    this.showToast('Mesaj okundu', 'success');
-    this.addLog(`Mesaj okundu: ${msg.sender}`, 'info');
-    localStorage.setItem('messages', JSON.stringify(this.messages)); 
-  }
-
-  deleteMessage(id: number) 
-  {
-    if (confirm("Mesajı silmek istediğinize emin misiniz?")) 
-    {
-      this.messages = this.messages.filter(m => m.id !== id);
-      this.showToast('Mesaj silindi', 'warning');
-      localStorage.setItem('messages', JSON.stringify(this.messages));
-    }
-  }
-
-  checkCriticalStocks() 
-  {
-    this.products.forEach(p => 
-    {
-      if (p.stock < 10) 
-      {
-        const alreadyLogged = this.systemLogs.some(log => log.action.includes(p.name) && log.type === 'danger');
-        if (!alreadyLogged) 
-        { 
-          this.addLog(`KRİTİK STOK: ${p.name}`, 'danger'); 
-        }
+    this.bannerSaving = true;
+    this.dataService.addBanner(this.newBanner).subscribe({
+      next: () => {
+        this.showToast('Banner eklendi!', 'success');
+        this.addLog(`Banner eklendi: ${this.newBanner.title}`, 'success');
+        this.newBanner = { title: '', imageUrl: '', link: '', isActive: true, order: 0 };
+        this.bannerSaving = false;
+        this.loadBanners();
+      },
+      error: () => {
+        this.bannerSaving = false;
+        this.showToast('Banner eklenemedi!', 'danger');
       }
     });
   }
 
-  generateFakeUsers() 
-  {
-    this.users = [];
-    for (let i = 1; i <= 30; i++) 
-    {
-      this.users.push({ 
-        id: i, 
-        email: `user${i}@mail.com`, 
-        status: 'Aktif', 
-        role: 'user' 
+  deleteBanner(id: number) {
+    if (confirm('Bu banneri silmek istiyor musunuz?')) {
+      this.dataService.deleteBanner(id).subscribe({
+        next: () => {
+          this.showToast('Banner silindi', 'warning');
+          this.addLog(`Banner silindi (ID: ${id})`, 'danger');
+          this.loadBanners();
+        },
+        error: () => this.showToast('Silme başarısız!', 'danger')
       });
     }
   }
 
-  saveToLocalStorage() 
-  {
-    // Ürünler artık API'den yönetiliyor ama diğer sayfalar için LocalStorage güncelleniyor
-    localStorage.setItem('allProducts', JSON.stringify(this.products));
-    this.dataService.updateProducts(this.products); 
-    this.refreshStats();
+  toggleBannerActive(banner: any) {
+    const updated = { ...banner, isActive: !banner.isActive };
+    this.dataService.updateBanner(banner.id, updated).subscribe({
+      next: () => {
+        banner.isActive = !banner.isActive;
+        this.showToast(banner.isActive ? 'Banner aktif edildi' : 'Banner pasif edildi', 'info');
+      },
+      error: () => this.showToast('Güncelleme başarısız!', 'danger')
+    });
   }
 
-  changeView(target: string) 
-  {
-    this.view = target;
-    if (target === 'dashboard') 
-    { 
-      setTimeout(() => this.initChart(), 100); 
-    }
-  }
-
-  selectedCategory: string = 'Hepsi';
-  sortType: string = 'newest';
-
-  get filteredProducts() 
-  {
-    let result = [...this.products];
-    
-    if (this.searchTerm) 
-    { 
-      result = result.filter(p => p.name.toLowerCase().includes(this.searchTerm.toLowerCase())); 
-    }
-    
-    if (this.selectedCategory !== 'Hepsi') 
-    { 
-      result = result.filter(p => p.category === this.selectedCategory); 
-    }
-    
-    return result;
-  }
-
-  onFileSelected(event: any) 
-  {
-    const file = event.target.files[0];
-    if (file) 
-    {
-      const reader = new FileReader();
-      reader.onload = (e: any) => 
-      { 
-        this.newProduct.img = e.target.result; 
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  // --- API İLE ÇALIŞAN METOTLAR ---
+  // ─── ÜRÜN ────────────────────────────────────────────────────────────────────
 
   saveProduct() {
-  if (!this.newProduct.name || !this.newProduct.price) {
-    this.showToast('İsim ve Fiyat zorunlu!', 'danger');
-    return;
+    if (!this.newProduct.name || !this.newProduct.price) {
+      this.showToast('İsim ve Fiyat zorunlu!', 'danger'); return;
+    }
+    const productToSend = {
+      name:        this.newProduct.name,
+      price:       this.newProduct.price,
+      stock:       this.newProduct.stock || 0,
+      category:    this.newProduct.category,
+      imageUrl:    this.newProduct.img || 'https://picsum.photos/400/400',
+      description: this.newProduct.description || '',
+      brandId:     this.newProduct.brandId || null
+    };
+    this.dataService.addProduct(productToSend).subscribe({
+      next: () => {
+        this.showToast('Ürün eklendi!', 'success');
+        this.addLog(`Yeni ürün eklendi: ${productToSend.name}`, 'success');
+        this.newProduct = { name: '', price: null, category: '', stock: null, img: '', description: '', brandId: null };
+        this.loadProducts();
+        this.view = 'products';
+      },
+      error: () => this.showToast('Hata: Yetkiniz yok veya API kapalı!', 'danger')
+    });
   }
 
-  const productToSend = {
-    name: this.newProduct.name,
-    price: this.newProduct.price,
-    stock: this.newProduct.stock || 0,
-    category: this.newProduct.category,
-    imageUrl: this.newProduct.img || 'https://picsum.photos/200/200'
-  };
-
-  this.dataService.addProduct(productToSend).subscribe({
-    next: (res) => {
-      this.showToast('Ürün veritabanına eklendi!', 'success');
-      this.dataService.refreshProducts(); // Listeyi güncelle
-      this.view = 'products'; // Listeye geri dön
-    },
-    error: (err) => {
-      console.error("Hata kodu:", err.status);
-      this.showToast('Hata: Yetkiniz olmayabilir veya API kapalı!', 'danger');
-    }
-  });
-}
-
-  editProduct(product: any) 
-  {
+  editProduct(product: any) {
     this.editingProduct = { ...product };
     this.view = 'edit-product';
   }
 
-  updateProduct() 
-  {
-    const updatedData = { 
-      ...this.editingProduct, 
-      imageUrl: this.editingProduct.img || this.editingProduct.imageUrl 
-    };
-    
+  updateProduct() {
+    const updatedData = { ...this.editingProduct, imageUrl: this.editingProduct.img || this.editingProduct.imageUrl };
     this.dataService.updateProduct(this.editingProduct.id, updatedData).subscribe({
       next: () => {
-        this.showToast('Ürün veritabanında güncellendi, biraderim.', 'success');
+        this.showToast('Ürün güncellendi.', 'success');
         this.addLog(`Ürün güncellendi: ${this.editingProduct.name}`, 'info');
-        this.dataService.refreshProducts();
+        this.loadProducts();
         this.view = 'products';
       },
-      error: () => this.showToast('Güncelleme sırasında hata oluştu!', 'danger')
+      error: () => this.showToast('Güncelleme başarısız!', 'danger')
     });
   }
 
-  deleteProduct(id: number) 
-  {
-    if (confirm("Bu ürünü veritabanından kalıcı olarak silmek istediğine emin misiniz?")) 
-    {
+  deleteProduct(id: number) {
+    if (confirm('Bu ürünü kalıcı olarak silmek istediğinize emin misiniz?')) {
       this.dataService.deleteProduct(id).subscribe({
         next: () => {
           this.showToast('Ürün silindi', 'warning');
           this.addLog(`Ürün silindi (ID: ${id})`, 'danger');
-          this.dataService.refreshProducts();
+          this.loadProducts();
         },
-        error: () => this.showToast('Silme işlemi başarısız!', 'danger')
+        error: () => this.showToast('Silme başarısız!', 'danger')
       });
     }
   }
 
-  // --- DİĞER FONKSİYONLAR ---
+  // ─── KATEGORİ ────────────────────────────────────────────────────────────────
 
-  addCategory() 
-  {
-    if (this.newCategoryName.trim()) 
-    {
-      this.categories.push(this.newCategoryName.trim());
-      this.showToast('Kategori başarıyla eklendi', 'success');
-      this.newCategoryName = '';
-    }
-  }
-
-  deleteCategory(cat: string) 
-  {
-    this.categories = this.categories.filter(c => c !== cat);
-    this.showToast('Kategori kaldırıldı', 'warning');
-  }
-
-  updateOrderStatus(orderNo: string, newStatus: string) 
-  {
-    const order = this.orders.find(o => (o.no === orderNo || o.id === orderNo));
-    
-    if (order) 
-    {
-      order.status = newStatus;
-      localStorage.setItem('orders', JSON.stringify(this.orders));
-      this.showToast(`Durum: ${newStatus}`, 'success');
-      this.addLog(`Sipariş güncellendi: ${orderNo}`, 'info');
-      this.refreshStats();
-    }
-  }
-
-  deleteOrder(id: string) 
-  {
-    if (confirm("Siparişi silmek istiyor musunuz?")) 
-    {
-      this.orders = this.orders.filter(o => (o.id !== id && o.no !== id));
-      localStorage.setItem('orders', JSON.stringify(this.orders));
-      this.showToast('Sipariş kaydı silindi', 'danger');
-      this.refreshStats();
-    }
-  }
-
-  openOrderDetails(order: any) 
-  { 
-    this.selectedOrder = order; 
-  }
-
-  approveComment(id: number) 
-  {
-    const c = this.comments.find(x => x.id === id);
-    if (c) 
-    { 
-      c.status = 'approved'; 
-      localStorage.setItem('productComments', JSON.stringify(this.comments));
-      this.showToast('Yorum onaylandı', 'success');
-    }
-  }
-
-  rejectComment(id: number) 
-  {
-    this.comments = this.comments.filter(x => x.id !== id);
-    localStorage.setItem('productComments', JSON.stringify(this.comments));
-    this.showToast('Yorum reddedildi', 'warning');
-  }
-
-  makeAdmin(user: any) 
-  {
-    this.admins.push({ 
-      id: user.id, 
-      name: user.email.split('@')[0], 
-      email: user.email, 
-      role: 'Editor' 
+  saveCategory() {
+    if (!this.newCategoryName.trim()) { this.showToast('Kategori adı zorunlu!', 'danger'); return; }
+    const data = { name: this.newCategoryName.trim(), description: this.newCategoryDescription.trim() };
+    this.dataService.addCategory(data).subscribe({
+      next: () => {
+        this.showToast('Kategori eklendi!', 'success');
+        this.addLog(`Kategori eklendi: ${data.name}`, 'success');
+        this.newCategoryName = ''; this.newCategoryDescription = '';
+        this.loadCategories();
+      },
+      error: (err: any) => this.showToast(err.error?.message || 'Kategori eklenemedi!', 'danger')
     });
-    this.users = this.users.filter(u => u.id !== user.id);
-    this.showToast('Yetki tanımlandı', 'success');
   }
 
-  deleteAdmin(id: number) 
-  {
-    this.admins = this.admins.filter(a => a.id !== id);
-    this.showToast('Yetki geri alındı', 'danger');
+  deleteCategory(id: number) {
+    if (confirm('Bu kategoriyi silmek istediğinize emin misiniz?')) {
+      this.dataService.deleteCategory(id).subscribe({
+        next: () => {
+          this.showToast('Kategori silindi', 'warning');
+          this.addLog(`Kategori silindi (ID: ${id})`, 'danger');
+          this.loadCategories();
+        },
+        error: () => this.showToast('Silme başarısız!', 'danger')
+      });
+    }
   }
 
-  removeUser(id: number) 
-  {
-    this.users = this.users.filter(u => u.id !== id);
-    this.showToast('Kullanıcı hesabı silindi', 'warning');
-    this.refreshStats();
+  // ─── MARKA ────────────────────────────────────────────────────────────────────
+
+  saveBrand() {
+    if (!this.newBrand.name.trim()) { this.showToast('Marka adı zorunlu!', 'danger'); return; }
+    this.dataService.addBrand(this.newBrand).subscribe({
+      next: () => {
+        this.showToast('Marka eklendi!', 'success');
+        this.addLog(`Marka eklendi: ${this.newBrand.name}`, 'success');
+        this.newBrand = { name: '', description: '', logoUrl: '' };
+        this.loadBrands();
+      },
+      error: () => this.showToast('Marka eklenemedi!', 'danger')
+    });
   }
 
-  printReport() 
-  { 
-    window.print(); 
+  deleteBrand(id: number) {
+    if (confirm('Bu markayı silmek istediğinize emin misiniz?')) {
+      this.dataService.deleteBrand(id).subscribe({
+        next: () => {
+          this.showToast('Marka silindi', 'warning');
+          this.addLog(`Marka silindi (ID: ${id})`, 'danger');
+          this.loadBrands();
+        },
+        error: () => this.showToast('Silme başarısız!', 'danger')
+      });
+    }
   }
 
-  toggleDarkMode() 
-  {
+  // ─── SİPARİŞ ─────────────────────────────────────────────────────────────────
+
+  updateOrderStatus(orderId: number, newStatus: string) {
+    this.dataService.updateOrderStatus(orderId, newStatus).subscribe({
+      next: () => { this.showToast(`Sipariş durumu: ${newStatus}`, 'success'); this.loadOrders(); },
+      error: () => this.showToast('Sipariş durumu güncellenemedi.', 'danger')
+    });
+  }
+
+  deleteOrder(id: number) {
+    if (confirm('Siparişi silmek istiyor musunuz?')) {
+      this.dataService.deleteOrder(id).subscribe({
+        next: () => { this.showToast('Sipariş silindi', 'danger'); this.loadOrders(); },
+        error: () => this.showToast('Hata oluştu', 'danger')
+      });
+    }
+  }
+
+  getOrderStatusClass(status: string): string {
+    switch (status) {
+      case 'Teslim Edildi': return 'status-done';
+      case 'Kargoda':       return 'status-shipping';
+      case 'Hazırlanıyor':  return 'status-preparing';
+      case 'İptal Edildi':  return 'status-cancelled';
+      default:              return 'status-pending';
+    }
+  }
+
+  getOrderCount(status: string): number {
+    return this.orders.filter(o => o.status === status).length;
+  }
+
+  openOrderDetails(order: any) { this.selectedOrder = order; }
+
+  // ─── YORUM ───────────────────────────────────────────────────────────────────
+
+  approveComment(id: number) {
+    this.dataService.updateCommentStatus(id, 'Onaylandı').subscribe({
+      next: () => { this.showToast('Yorum onaylandı', 'success'); this.loadComments(); },
+      error: () => this.showToast('İşlem başarısız', 'danger')
+    });
+  }
+
+  rejectComment(id: number) {
+    this.dataService.updateCommentStatus(id, 'Reddedildi').subscribe({
+      next: () => { this.showToast('Yorum reddedildi', 'warning'); this.loadComments(); },
+      error: () => this.showToast('İşlem başarısız', 'danger')
+    });
+  }
+
+  deleteComment(id: number) {
+    if (confirm('Bu yorumu silmek istiyor musunuz?')) {
+      this.dataService.deleteComment(id).subscribe({
+        next: () => { this.showToast('Yorum silindi', 'warning'); this.loadComments(); },
+        error: () => this.showToast('Silme başarısız', 'danger')
+      });
+    }
+  }
+
+  // ─── ÇALIŞAN ─────────────────────────────────────────────────────────────────
+
+  saveEmployee() {
+    if (!this.newEmployee.fullName.trim() || !this.newEmployee.email.trim() || !this.newEmployee.password) {
+      this.showToast('Tüm alanlar zorunlu!', 'danger'); return;
+    }
+    this.employeeSaving = true;
+    this.dataService.addEmployee(this.newEmployee).subscribe({
+      next: () => {
+        this.showToast('Çalışan eklendi!', 'success');
+        this.addLog(`Yeni çalışan eklendi: ${this.newEmployee.fullName}`, 'success');
+        this.newEmployee = { fullName: '', email: '', password: '', role: 'Employee' };
+        this.employeeSaving = false;
+        this.loadEmployees();
+      },
+      error: (err: any) => {
+        this.employeeSaving = false;
+        this.showToast(err.error?.message || 'Çalışan eklenemedi!', 'danger');
+      }
+    });
+  }
+
+  deleteEmployee(id: number) {
+    if (confirm('Bu çalışanı silmek istiyor musunuz?')) {
+      this.dataService.deleteUser(id).subscribe({
+        next: () => {
+          this.showToast('Çalışan silindi', 'warning');
+          this.addLog(`Çalışan silindi (ID: ${id})`, 'danger');
+          this.loadEmployees();
+        },
+        error: () => this.showToast('Silme başarısız!', 'danger')
+      });
+    }
+  }
+
+  // ─── GÖRSEL UPLOAD ────────────────────────────────────────────────────────────
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => { this.newProduct.img = e.target.result; };
+    reader.readAsDataURL(file);
+
+    this.uploadingImage = true;
+    this.dataService.uploadImage(file).subscribe({
+      next: (data: any) => {
+        if (data?.url) {
+          this.newProduct.img = `http://localhost:5078${data.url}`;
+        }
+        this.uploadingImage = false;
+      },
+      error: () => {
+        this.uploadingImage = false;
+        this.showToast('Resim yüklenemedi!', 'danger');
+      }
+    });
+  }
+
+  // ─── ŞİRKET AYARLARI ──────────────────────────────────────────────────────────
+
+  goToCompanySettings() {
+    this.router.navigate(['/admin/company-settings']);
+  }
+
+  // ─── YARDIMCI ────────────────────────────────────────────────────────────────
+
+  get filteredProducts() {
+    let result = [...this.products];
+    if (this.searchTerm)
+      result = result.filter(p => p.name.toLowerCase().includes(this.searchTerm.toLowerCase()));
+    if (this.selectedCategory !== 'Hepsi')
+      result = result.filter(p => p.category === this.selectedCategory);
+    return result;
+  }
+
+  changeView(target: string) {
+    this.view = target;
+    if (target === 'dashboard') setTimeout(() => this.initChart(), 100);
+  }
+
+  showToast(message: string, type: 'success' | 'danger' | 'warning' | 'info' = 'success') {
+    const id = Date.now();
+    this.toasts.push({ id, message, type });
+    setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id); }, 3000);
+  }
+
+  addLog(action: string, type: 'success' | 'info' | 'warning' | 'danger') {
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    this.systemLogs.unshift({ time: timeStr, user: this.currentUser.name || 'Admin', action, type });
+    if (this.systemLogs.length > 20) this.systemLogs.pop();
+  }
+
+  refreshStats() {
+    this.stats.monthlyRevenue = this.orders.reduce((sum, o) => sum + Number(o.totalPrice || 0), 0);
+    this.stats.criticalStock  = this.products.filter(p => p.stock < 10).length;
+    this.stats.totalCustomers = this.users.length;
+  }
+
+  checkCriticalStocks() {
+    this.products.forEach(p => {
+      if (p.stock < 10) {
+        const alreadyLogged = this.systemLogs.some(l => l.action.includes(p.name) && l.type === 'danger');
+        if (!alreadyLogged) this.addLog(`KRİTİK STOK: ${p.name}`, 'danger');
+      }
+    });
+  }
+
+  toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
     localStorage.setItem('theme', this.isDarkMode ? 'dark' : 'light');
-    
-    if (this.isDarkMode) 
-    { 
-      document.body.classList.add('dark-theme'); 
-    } 
-    else 
-    { 
-      document.body.classList.remove('dark-theme'); 
-    }
+    document.body.classList.toggle('dark-theme', this.isDarkMode);
   }
 
-  approveAllOrders() 
-  {
-    if (confirm("Bekleyen tüm siparişler kargolansın mı?")) 
-    {
-      this.orders.forEach(o => 
-      { 
-        if (o.status === 'Hazırlanıyor') o.status = 'Kargolandı'; 
-      });
-      localStorage.setItem('orders', JSON.stringify(this.orders));
-      this.showToast('Toplu onay başarılı!', 'success');
-      this.refreshStats();
-    }
-  }
-
-  getUserTotalSpend(userEmail: string): number 
-  {
-    const userName = userEmail.split('@')[0].toLowerCase();
-    
-    return this.orders
-      .filter(o => (o.user || o.customer || '').toLowerCase() === userName)
-      .reduce((sum, o) => sum + Number(o.total), 0);
-  }
-
-  quickAddStock(product: any) 
-  {
-    product.stock += 10;
-    this.showToast('Stok hızlıca artırıldı', 'success');
-  }
-
-  addCoupon() 
-  {
-    if (this.newCoupon.code && this.newCoupon.discount) 
-    {
-      this.coupons.push({ ...this.newCoupon });
-      localStorage.setItem('activeCoupons', JSON.stringify(this.coupons));
-      this.showToast('Yeni kupon tanımlandı', 'success');
-      
-      this.newCoupon = { 
-        code: '', 
-        discount: null, 
-        type: 'percentage' 
-      };
-    }
-  }
-
-  deleteCoupon(index: any) 
-  { 
-    this.coupons.splice(index, 1);
-    localStorage.setItem('activeCoupons', JSON.stringify(this.coupons));
-    this.showToast('Kupon silindi', 'success'); 
-  }
-
-  logout() 
-  {
+  logout() {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('nexus_token');
     this.router.navigate(['/login']);
   }
 
-  initChart() 
-  {
+  printReport() { window.print(); }
+
+  initChart() {
     const ctx = document.getElementById('salesChart') as HTMLCanvasElement;
-    
-    if (ctx) 
-    {
-      if (this.salesChart) 
-      { 
-        this.salesChart.destroy(); 
-      }
-      
+    if (ctx) {
+      if (this.salesChart) this.salesChart.destroy();
       this.salesChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -620,10 +519,27 @@ export class AdminComponent implements OnInit, AfterViewInit
             label: 'Satış (₺)',
             data: [12000, 19000, 15000, 25000, 22000, 30000],
             borderColor: '#6366f1',
-            tension: 0.4
+            backgroundColor: 'rgba(99,102,241,0.08)',
+            tension: 0.4,
+            fill: true
           }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } }
         }
       });
+    }
+  }
+
+  getRoleColor(role: string): string {
+    switch (role) {
+      case 'Super Admin': return '#a855f7';
+      case 'Admin':       return '#6366f1';
+      case 'Employee':    return '#0ea5e9';
+      case 'Customer':    return '#22c55e';
+      default:            return '#94a3b8';
     }
   }
 }

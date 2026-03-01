@@ -1,20 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms'; 
+import { FormsModule } from '@angular/forms';
 import { DataService } from '../services/data.service';
 
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule], 
-  templateUrl: './cart.html'
+  imports: [CommonModule, RouterLink, FormsModule],
+  templateUrl: './cart.html',
+  styleUrls: ['./cart.css']
 })
 export class CartComponent implements OnInit {
   cartItems: any[] = [];
   totalPrice: number = 0;
+  currentUser: any = null;
+  isOrdering: boolean = false;
+  orderSuccess: boolean = false;
 
-  // KUPON DEĞİŞKENLERİ
   couponCode: string = '';
   discount: number = 0;
   discountRate: number = 0;
@@ -22,35 +25,70 @@ export class CartComponent implements OnInit {
   constructor(private dataService: DataService, private router: Router) {}
 
   ngOnInit() {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) this.currentUser = JSON.parse(savedUser);
     this.loadCart();
   }
 
   loadCart() {
     const savedCart = localStorage.getItem('cart');
     this.cartItems = savedCart ? JSON.parse(savedCart) : [];
+    this.cartItems = this.cartItems.map(item => ({
+      ...item,
+      imageUrl: item.imageUrl || item.img || 'https://picsum.photos/200?random=' + item.id
+    }));
     this.calculateTotal();
   }
 
   calculateTotal() {
     this.totalPrice = this.cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    if (this.discount > 0) {
+      this.discount = (this.totalPrice * this.discountRate) / 100;
+    }
+  }
+
+  increaseQty(item: any) {
+    item.quantity++;
+    this.saveCart();
+    this.calculateTotal();
+  }
+
+  decreaseQty(item: any) {
+    if (item.quantity > 1) {
+      item.quantity--;
+      this.saveCart();
+      this.calculateTotal();
+    }
+  }
+
+  removeItem(id: any) {
+    this.cartItems = this.cartItems.filter(item => (item.id || item.name) !== id);
+    this.saveCart();
+    this.calculateTotal();
+  }
+
+  saveCart() {
+    localStorage.setItem('cart', JSON.stringify(this.cartItems));
+  }
+
+  clearCart() {
+    if (confirm('Sepeti tamamen boşaltmak istiyor musunuz?')) {
+      this.cartItems = [];
+      this.saveCart();
+      this.calculateTotal();
+      this.removeCoupon();
+    }
   }
 
   applyCoupon() {
-    // ADMIN İLE AYNI İSİM: 'activeCoupons'
     const savedCoupons = localStorage.getItem('activeCoupons');
     const coupons = savedCoupons ? JSON.parse(savedCoupons) : [];
-    
-    console.log("LocalStorage'dan gelen kuponlar:", coupons);
-    console.log("Aranan kod:", this.couponCode);
-
-    const foundCoupon = coupons.find((c: any) => 
+    const foundCoupon = coupons.find((c: any) =>
       c.code.trim().toUpperCase() === this.couponCode.trim().toUpperCase()
     );
-
     if (foundCoupon) {
       this.discountRate = foundCoupon.discount;
       this.discount = (this.totalPrice * this.discountRate) / 100;
-      alert(`%${this.discountRate} indirim uygulandı biraderim!`);
     } else {
       alert('Geçersiz kupon kodu!');
       this.removeCoupon();
@@ -63,59 +101,38 @@ export class CartComponent implements OnInit {
     this.discountRate = 0;
   }
 
-  removeItem(id: any) {
-    this.cartItems = this.cartItems.filter(item => (item.id || item.name) !== id);
-    localStorage.setItem('cart', JSON.stringify(this.cartItems));
-    this.calculateTotal();
-    
-    // Ürün silinince indirim tutarını güncelle
-    if (this.discount > 0) {
-      this.discount = (this.totalPrice * this.discountRate) / 100;
-    }
-    
-    this.dataService.updateCartCountFromStorage();
+  get finalTotal(): number {
+    return this.totalPrice - this.discount;
   }
 
   completeOrder() {
+    if (!this.currentUser) {
+      this.router.navigate(['/login']);
+      return;
+    }
     if (this.cartItems.length === 0) return;
 
-    const productsJson = localStorage.getItem('allProducts');
-    const ordersJson = localStorage.getItem('orders');
-    
-    let allProducts = productsJson ? JSON.parse(productsJson) : [];
-    let orders = ordersJson ? JSON.parse(ordersJson) : [];
-
-    // Stok güncelleme
-    this.cartItems.forEach(cartItem => {
-      const productIndex = allProducts.findIndex((p: any) => p.id === cartItem.id || p.name === cartItem.name);
-      if (productIndex !== -1) {
-        allProducts[productIndex].stock -= cartItem.quantity;
-        if (allProducts[productIndex].stock < 0) allProducts[productIndex].stock = 0;
-      }
-    });
-
-    const finalTotal = this.totalPrice - this.discount;
+    this.isOrdering = true;
 
     const newOrder = {
-      no: `#ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-      customer: 'Biraderim',
-      content: this.cartItems.map(item => `${item.name} (${item.quantity})`).join(', '),
-      total: finalTotal, 
-      date: new Date().toLocaleDateString('tr-TR'),
-      status: 'Hazırlanıyor'
+      userName: this.currentUser.fullName || this.currentUser.name || 'Müşteri',
+      totalPrice: this.finalTotal,
+      status: 'Beklemede'
     };
 
-    orders.push(newOrder);
-    localStorage.setItem('orders', JSON.stringify(orders));
-    localStorage.setItem('allProducts', JSON.stringify(allProducts));
-    
-    this.dataService.updateProducts(allProducts);
-
-    alert(`Sipariş başarıyla oluşturuldu! ${this.discount > 0 ? 'İndirim uygulandı.' : ''}`);
-    localStorage.removeItem('cart');
-    this.cartItems = [];
-    this.removeCoupon();
-    this.dataService.updateCartCountFromStorage();
-    this.router.navigate(['/home']);
+    this.dataService.addOrder(newOrder).subscribe({
+      next: () => {
+        this.isOrdering = false;
+        this.orderSuccess = true;
+        localStorage.removeItem('cart');
+        this.cartItems = [];
+        this.removeCoupon();
+        setTimeout(() => this.router.navigate(['/home']), 2500);
+      },
+      error: () => {
+        this.isOrdering = false;
+        alert('Sipariş oluşturulamadı. Lütfen tekrar deneyin.');
+      }
+    });
   }
 }

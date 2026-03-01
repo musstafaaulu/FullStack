@@ -1,0 +1,295 @@
+<!-- NAV -->
+<nav class="profile-nav">
+  <div class="nav-inner">
+    <a routerLink="/home" class="back-btn">
+      <i class="fas fa-arrow-left"></i> Ana Sayfa
+    </a>
+    <span class="nav-brand">NEXUS</span>
+    <button class="logout-btn" (click)="logout()">
+      <i class="fas fa-sign-out-alt"></i> Çıkış
+    </button>
+  </div>
+</nav>
+
+<div class="profile-wrapper">
+
+  <!-- SOL SIDEBAR -->
+  <div class="sidebar">
+    <div class="user-card">
+      <div class="avatar">{{initials}}</div>
+      <h3 class="user-name">{{currentUser?.fullName || currentUser?.name}}</h3>
+      <p class="user-email">{{currentUser?.email}}</p>
+      <span class="user-role">{{currentUser?.role || 'Müşteri'}}</span>
+    </div>
+
+    <nav class="side-nav">
+      <button class="nav-item" [class.active]="activeTab === 'info'" (click)="setTab('info')">
+        <i class="fas fa-user"></i> Kişisel Bilgiler
+      </button>
+      <button class="nav-item" [class.active]="activeTab === 'orders'" (click)="setTab('orders')">
+        <i class="fas fa-shopping-bag"></i> Siparişlerim
+        <span class="badge" *ngIf="orders.length > 0">{{orders.length}}</span>
+      </button>
+      <button class="nav-item" [class.active]="activeTab === 'addresses'" (click)="setTab('addresses')">
+        <i class="fas fa-map-marker-alt"></i> Adreslerim
+      </button>
+      <button class="nav-item" [class.active]="activeTab === 'password'" (click)="setTab('password')">
+        <i class="fas fa-lock"></i> Şifre Değiştir
+      </button>
+      <button class="nav-item danger" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i> Çıkış Yap
+      </button>
+    </nav>
+  </div>
+
+  <!-- SAĞ İÇERİK -->
+  <div class="content">
+
+    <!-- KİŞİSEL BİLGİLER -->
+    <div class="tab-content" *ngIf="activeTab === 'info'">
+      <div class="content-header">
+        <h2>Kişisel Bilgiler</h2>
+        <p>Ad ve e-posta bilgilerini güncelleyebilirsin</p>
+      </div>
+      <div class="form-card">
+        <div class="field">
+          <label>Ad Soyad</label>
+          <div class="input-wrap"><i class="fas fa-user"></i>
+            <input type="text" [(ngModel)]="infoForm.fullName" placeholder="Ad Soyad">
+          </div>
+        </div>
+        <div class="field">
+          <label>E-posta</label>
+          <div class="input-wrap"><i class="fas fa-envelope"></i>
+            <input type="email" [(ngModel)]="infoForm.email" placeholder="ornek@mail.com">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="save-btn" (click)="saveInfo()" [disabled]="infoSaving">
+            <i class="fas" [ngClass]="infoSaving ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+            {{ infoSaving ? 'Kaydediliyor...' : 'Kaydet' }}
+          </button>
+          <span class="success-msg" *ngIf="infoSuccess"><i class="fas fa-check-circle"></i> Bilgiler güncellendi!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SİPARİŞLER -->
+    <div class="tab-content" *ngIf="activeTab === 'orders'">
+
+      <!-- Sipariş Detayı Açıksa -->
+      <div *ngIf="selectedOrder">
+        <div class="content-header" style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <h2>Sipariş #{{selectedOrder.id}}</h2>
+            <p>{{selectedOrder.createdAt | date:'dd MMMM yyyy'}}</p>
+          </div>
+          <button class="back-order-btn" (click)="closeOrder()">
+            <i class="fas fa-arrow-left"></i> Siparişlerime Dön
+          </button>
+        </div>
+
+        <!-- Durum İptal ise -->
+        <div class="cancelled-box" *ngIf="selectedOrder.status === 'İptal Edildi'">
+          <i class="fas fa-times-circle"></i>
+          <div>
+            <strong>Sipariş İptal Edildi</strong>
+            <p>Bu sipariş iptal edilmiştir.</p>
+          </div>
+        </div>
+
+        <!-- Sipariş Timeline -->
+        <div class="tracking-card" *ngIf="selectedOrder.status !== 'İptal Edildi'">
+          <h3 class="tracking-title"><i class="fas fa-map-marked-alt"></i> Sipariş Takibi</h3>
+          <div class="timeline">
+            <div class="timeline-step" *ngFor="let step of statusSteps; let i = index"
+                 [class.done]="isStepDone(i, selectedOrder.status)"
+                 [class.active]="isStepActive(i, selectedOrder.status)">
+              <div class="step-icon">
+                <i class="fas" [ngClass]="getStepIcon(step)"></i>
+              </div>
+              <div class="step-line" *ngIf="i < statusSteps.length - 1"></div>
+              <div class="step-label">{{step}}</div>
+            </div>
+          </div>
+          <p class="tracking-status-text">
+            <i class="fas" [ngClass]="getStatusIcon(selectedOrder.status)"></i>
+            Sipariş şu an: <strong>{{selectedOrder.status}}</strong>
+          </p>
+        </div>
+
+        <!-- Sipariş Özet -->
+        <div class="order-detail-card">
+          <div class="od-row">
+            <span class="od-label"><i class="fas fa-hashtag"></i> Sipariş No</span>
+            <span class="od-val"><strong>#{{selectedOrder.id}}</strong></span>
+          </div>
+          <div class="od-row">
+            <span class="od-label"><i class="fas fa-calendar"></i> Tarih</span>
+            <span class="od-val">{{selectedOrder.createdAt | date:'dd.MM.yyyy HH:mm'}}</span>
+          </div>
+          <div class="od-row">
+            <span class="od-label"><i class="fas fa-info-circle"></i> Durum</span>
+            <span class="order-status" [ngClass]="getStatusClass(selectedOrder.status)">{{selectedOrder.status}}</span>
+          </div>
+          <div class="od-row total">
+            <span class="od-label"><i class="fas fa-money-bill-wave"></i> Toplam Tutar</span>
+            <span class="od-total">{{selectedOrder.totalPrice | number:'1.0-0'}} ₺</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sipariş Listesi -->
+      <div *ngIf="!selectedOrder">
+        <div class="content-header">
+          <h2>Siparişlerim</h2>
+          <p>Verdiğin siparişlerin geçmişi</p>
+        </div>
+
+        <!-- Özet Kartlar -->
+        <div class="order-stats" *ngIf="orders.length > 0">
+          <div class="os-card">
+            <span class="os-num">{{orderStats.total}}</span>
+            <span class="os-label">Toplam</span>
+          </div>
+          <div class="os-card pending">
+            <span class="os-num">{{orderStats.pending}}</span>
+            <span class="os-label">Hazırlanıyor</span>
+          </div>
+          <div class="os-card shipping">
+            <span class="os-num">{{orderStats.shipping}}</span>
+            <span class="os-label">Kargoda</span>
+          </div>
+          <div class="os-card done">
+            <span class="os-num">{{orderStats.done}}</span>
+            <span class="os-label">Teslim Edildi</span>
+          </div>
+        </div>
+
+        <div class="loading-orders" *ngIf="ordersLoading">
+          <div class="spinner"></div>
+        </div>
+
+        <div class="empty-state" *ngIf="!ordersLoading && orders.length === 0">
+          <span style="font-size:56px;">🛍️</span>
+          <p>Henüz sipariş vermedin</p>
+          <a routerLink="/home" class="shop-link">Alışverişe Başla</a>
+        </div>
+
+        <div class="orders-list" *ngIf="!ordersLoading && orders.length > 0">
+          <div class="order-card" *ngFor="let order of orders" (click)="openOrder(order)">
+            <div class="order-left">
+              <div class="order-icon" [ngClass]="getStatusClass(order.status)">
+                <i class="fas" [ngClass]="getStatusIcon(order.status)"></i>
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span class="order-id">#{{order.id}}</span>
+                  <span class="order-status" [ngClass]="getStatusClass(order.status)">{{order.status}}</span>
+                </div>
+                <span class="order-date">{{order.createdAt | date:'dd MMM yyyy'}}</span>
+              </div>
+            </div>
+            <div class="order-right">
+              <span class="order-total">{{order.totalPrice | number:'1.0-0'}} ₺</span>
+              <i class="fas fa-chevron-right" style="color:#cbd5e1; font-size:13px;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADRESLER -->
+    <div class="tab-content" *ngIf="activeTab === 'addresses'">
+      <div class="content-header">
+        <h2>Adreslerim</h2>
+        <p>Teslimat adreslerini yönet</p>
+      </div>
+      <div class="addresses-grid">
+        <div class="address-card" *ngFor="let addr of addresses">
+          <div class="address-top">
+            <span class="address-title"><i class="fas fa-home"></i> {{addr.title}}</span>
+            <button class="delete-addr" (click)="deleteAddress(addr.id)"><i class="fas fa-trash"></i></button>
+          </div>
+          <p class="address-text">{{addr.fullAddress}}</p>
+          <p class="address-city"><i class="fas fa-map-marker-alt"></i> {{addr.city}}</p>
+          <p class="address-phone" *ngIf="addr.phone"><i class="fas fa-phone"></i> {{addr.phone}}</p>
+        </div>
+        <div class="add-address-card" (click)="showAddressForm = true" *ngIf="!showAddressForm">
+          <i class="fas fa-plus"></i>
+          <span>Yeni Adres Ekle</span>
+        </div>
+      </div>
+      <div class="form-card" *ngIf="showAddressForm">
+        <h4 style="margin-bottom:20px; color:#1e293b;">Yeni Adres</h4>
+        <div class="field-row">
+          <div class="field">
+            <label>Adres Başlığı</label>
+            <div class="input-wrap"><i class="fas fa-tag"></i>
+              <input type="text" [(ngModel)]="newAddress.title" placeholder="Örn: Ev, İş">
+            </div>
+          </div>
+          <div class="field">
+            <label>Şehir</label>
+            <div class="input-wrap"><i class="fas fa-city"></i>
+              <input type="text" [(ngModel)]="newAddress.city" placeholder="İstanbul">
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Açık Adres</label>
+          <div class="input-wrap"><i class="fas fa-map"></i>
+            <input type="text" [(ngModel)]="newAddress.fullAddress" placeholder="Mahalle, cadde, bina no...">
+          </div>
+        </div>
+        <div class="field">
+          <label>Telefon</label>
+          <div class="input-wrap"><i class="fas fa-phone"></i>
+            <input type="text" [(ngModel)]="newAddress.phone" placeholder="05XX XXX XX XX">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="save-btn" (click)="saveAddress()"><i class="fas fa-check"></i> Kaydet</button>
+          <button class="cancel-btn" (click)="showAddressForm = false">İptal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ŞİFRE DEĞİŞTİR -->
+    <div class="tab-content" *ngIf="activeTab === 'password'">
+      <div class="content-header">
+        <h2>Şifre Değiştir</h2>
+        <p>Hesap güvenliğin için güçlü bir şifre kullan</p>
+      </div>
+      <div class="form-card">
+        <div class="field">
+          <label>Mevcut Şifre</label>
+          <div class="input-wrap"><i class="fas fa-lock"></i>
+            <input type="password" [(ngModel)]="passwordForm.current" placeholder="••••••••">
+          </div>
+        </div>
+        <div class="field">
+          <label>Yeni Şifre</label>
+          <div class="input-wrap"><i class="fas fa-lock"></i>
+            <input type="password" [(ngModel)]="passwordForm.newPass" placeholder="En az 6 karakter">
+          </div>
+        </div>
+        <div class="field">
+          <label>Yeni Şifre Tekrar</label>
+          <div class="input-wrap"><i class="fas fa-lock"></i>
+            <input type="password" [(ngModel)]="passwordForm.confirm" placeholder="••••••••">
+          </div>
+        </div>
+        <p class="error-msg" *ngIf="passwordError"><i class="fas fa-exclamation-circle"></i> {{passwordError}}</p>
+        <div class="form-actions">
+          <button class="save-btn" (click)="changePassword()" [disabled]="passwordSaving">
+            <i class="fas" [ngClass]="passwordSaving ? 'fa-spinner fa-spin' : 'fa-key'"></i>
+            {{ passwordSaving ? 'Değiştiriliyor...' : 'Şifreyi Değiştir' }}
+          </button>
+          <span class="success-msg" *ngIf="passwordSuccess"><i class="fas fa-check-circle"></i> Şifre güncellendi!</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

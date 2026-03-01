@@ -26,7 +26,7 @@ using (var scope = app.Services.CreateScope())
     if (!context.Products.Any())
     {
         context.Products.Add(new RestApi.Models.Product { Name = "iPhone 15", Category = "Elektronik", Price = 65000, Stock = 10 });
-        context.Users.Add(new RestApi.Models.User { Name = "Mustafa Ulu", Email = "mustafa@ulu.com", Role = "SuperAdmin" });
+context.Users.Add(new RestApi.Models.User { FullName = "Mustafa Ulu", Email = "mustafa@ulu.com", Role = "SuperAdmin" });
         context.SaveChanges();
     }
 }

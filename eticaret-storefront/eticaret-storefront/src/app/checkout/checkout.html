@@ -1,0 +1,35 @@
+<!-- src/app/checkout/checkout.html -->
+
+<div class="checkout-container">
+  <h2>Sipariş Oluştur</h2>
+
+  <div class="alert error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="order-summary">
+    <h3>Sipariş Özeti</h3>
+    <div class="item" *ngFor="let item of cartItems">
+      <span>{{ item.name }} x{{ item.quantity }}</span>
+      <span>{{ item.price * item.quantity | currency:'TRY':'symbol':'1.2-2' }}</span>
+    </div>
+    <div class="total">
+      <strong>Toplam:</strong>
+      <strong>{{ total | currency:'TRY':'symbol':'1.2-2' }}</strong>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Teslimat Adresi</label>
+    <textarea [(ngModel)]="address" rows="3" placeholder="Adresinizi girin..."></textarea>
+  </div>
+
+  <div class="form-group">
+    <label>Sipariş Notu (opsiyonel)</label>
+    <textarea [(ngModel)]="note" rows="2" placeholder="Notunuz..."></textarea>
+  </div>
+
+  <button (click)="onOrder()" [disabled]="isLoading">
+    {{ isLoading ? 'Sipariş Veriliyor...' : 'Siparişi Tamamla' }}
+  </button>
+
+  <a routerLink="/cart" class="back-link">← Sepete Dön</a>
+</div>

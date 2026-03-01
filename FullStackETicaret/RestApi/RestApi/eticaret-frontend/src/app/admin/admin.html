@@ -5,20 +5,19 @@
   </div>
 </div>
 
-<div *ngIf="currentUser && (currentUser.role === 'Super Admin' || (currentUser.role && currentUser.role.includes('Admin')))" class="admin-wrapper" [class.dark-mode-active]="isDarkMode">
-  
+<div *ngIf="currentUser && (currentUser.role === 'Super Admin' || currentUser.role === 'Admin' || currentUser.role === 'Employee')" class="admin-wrapper" [class.dark-mode-active]="isDarkMode">
+
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="logo-box" style="background: linear-gradient(135deg, #6366f1, #a855f7);">N</div>
       <span style="letter-spacing: 1px; font-weight: 800;">NEXUS CORE</span>
     </div>
-
     <nav class="nav-container">
       <p class="nav-label">KONTROL MERKEZİ</p>
       <div class="nav-item" (click)="changeView('dashboard')" [class.active]="view === 'dashboard'">
         <i class="fas fa-chart-pie"></i> <span>Genel Bakış</span>
       </div>
-
       <p class="nav-label">ENVANTER & SATIŞ</p>
       <div class="nav-item" (click)="changeView('products')" [class.active]="view === 'products' || view === 'addProduct' || view === 'edit-product'">
         <i class="fas fa-shopping-bag"></i> <span>Ürün Yönetimi</span>
@@ -30,15 +29,14 @@
       <div class="nav-item" (click)="changeView('categories')" [class.active]="view === 'categories'">
         <i class="fas fa-layer-group"></i> <span>Kategoriler</span>
       </div>
-      <div class="nav-item" (click)="changeView('coupons')" [class.active]="view === 'coupons'">
-        <i class="fas fa-ticket-alt"></i> <span>Kupon Yönetimi</span>
+      <div class="nav-item" (click)="changeView('brands')" [class.active]="view === 'brands'">
+        <i class="fas fa-trademark"></i> <span>Marka Yönetimi</span>
       </div>
-
+      <div class="nav-item" (click)="changeView('banners')" [class.active]="view === 'banners'">
+        <i class="fas fa-images"></i> <span>Banner / Slider</span>
+        <span class="badge" style="background:#0ea5e9;" *ngIf="banners.length > 0">{{banners.length}}</span>
+      </div>
       <p class="nav-label">MÜŞTERİ & YÖNETİM</p>
-      <div class="nav-item" (click)="changeView('messages')" [class.active]="view === 'messages'">
-        <i class="fas fa-envelope"></i> <span>Mesajlar</span>
-        <span class="badge" style="background: #6366f1;" *ngIf="messages && messages.length > 0">{{messages.length}}</span>
-      </div>
       <div class="nav-item" (click)="changeView('comments')" [class.active]="view === 'comments'">
         <i class="fas fa-comment-alt"></i> <span>Yorum Kontrolü</span>
         <span class="badge" *ngIf="comments && comments.length > 0">{{comments.length}}</span>
@@ -46,21 +44,25 @@
       <div class="nav-item" (click)="changeView('users')" [class.active]="view === 'users'">
         <i class="fas fa-users"></i> <span>Kullanıcı Listesi</span>
       </div>
-      <div class="nav-item" (click)="changeView('admins')" [class.active]="view === 'admins'">
-        <i class="fas fa-user-shield"></i> <span>Admin Kadrosu</span>
+      <div class="nav-item" (click)="changeView('employees')" [class.active]="view === 'employees'">
+        <i class="fas fa-user-tie"></i> <span>Çalışanlar</span>
+        <span class="badge" style="background:#0ea5e9;" *ngIf="employees.length > 0">{{employees.length}}</span>
       </div>
-      
+      <div class="nav-item" (click)="goToCompanySettings()">
+        <i class="fas fa-cog"></i> <span>Şirket Ayarları</span>
+      </div>
       <div class="nav-item theme-item" (click)="toggleDarkMode()">
         <i class="fas" [ngClass]="isDarkMode ? 'fa-sun' : 'fa-moon'"></i>
         <span>{{ isDarkMode ? 'Aydınlık Mod' : 'Karanlık Mod' }}</span>
       </div>
     </nav>
-
     <div class="sidebar-footer">
       <div class="user-pill" *ngIf="currentUser">
-        <div class="u-avatar">{{ currentUser.name?.charAt(0) || 'A' }}</div>
+        <div class="u-avatar" [style.background]="getRoleColor(currentUser.role)">
+          {{ (currentUser.fullName || currentUser.name || 'A').charAt(0).toUpperCase() }}
+        </div>
         <div class="u-info">
-          <span class="u-name">{{ currentUser.name }}</span>
+          <span class="u-name">{{ currentUser.fullName || currentUser.name || 'Admin' }}</span>
           <span class="u-role">{{ currentUser.role }}</span>
         </div>
       </div>
@@ -70,83 +72,52 @@
     </div>
   </aside>
 
+  <!-- MAIN -->
   <main class="main-content">
     <header class="top-header">
       <div class="welcome">
-        <h1>
-          {{ 
-            view === 'dashboard' ? 'Dashboard' : 
-            view === 'products' ? 'Ürün Portföyü' : 
-            view === 'orders' ? 'Sipariş Yönetimi' : 
-            view === 'categories' ? 'Kategori Yönetimi' : 
-            view === 'admins' ? 'Admin Kadrosu' : 
-            view === 'users' ? 'Müşteri Veritabanı' : 
-            view === 'comments' ? 'Yorum Kontrolü' : 
-            view === 'messages' ? 'Müşteri Mesajları' : 
-            view === 'coupons' ? 'Kupon ve Kampanyalar' : 'Yönetim Paneli' 
-          }}
-        </h1>
-        <p>Sistemin durumu bugün harika, işte detaylar.</p>
+        <h1>{{ view === 'dashboard' ? 'Dashboard' : view === 'products' ? 'Ürün Portföyü' : view === 'orders' ? 'Sipariş Yönetimi' : view === 'categories' ? 'Kategori Yönetimi' : view === 'brands' ? 'Marka Yönetimi' : view === 'banners' ? 'Banner / Slider Yönetimi' : view === 'employees' ? 'Çalışan Yönetimi' : view === 'users' ? 'Kullanıcı Listesi' : view === 'comments' ? 'Yorum Kontrolü' : 'Yönetim Paneli' }}</h1>
+        <p>Hoş geldin, {{ currentUser.fullName || currentUser.name }}! <span class="role-badge" [style.background]="getRoleColor(currentUser.role)">{{ currentUser.role }}</span></p>
       </div>
       <div class="header-tools">
-        <button class="q-btn" style="background: #fff; color: #333; margin-right: 10px;" (click)="printReport()">
-          <i class="fas fa-print"></i> Yazdır
-        </button>
-        <div class="date-chip"><i class="far fa-calendar-alt"></i> 19 Şubat 2026</div>
+        <button class="q-btn" style="background: #fff; color: #333; margin-right: 10px; width:auto;" (click)="printReport()"><i class="fas fa-print"></i> Yazdır</button>
+        <div class="date-chip"><i class="far fa-calendar-alt"></i> {{ today | date:'dd MMMM yyyy' }}</div>
       </div>
     </header>
 
+    <!-- DASHBOARD -->
     <section *ngIf="view === 'dashboard'" class="fade-in">
       <div class="stats-grid">
         <div class="stat-card blue">
-          <div class="s-data">
-            <span class="s-label">AYLIK GELİR</span>
-            <h3 class="s-value">{{stats.monthlyRevenue | number}} ₺</h3>
-            <span class="s-trend"><i class="fas fa-arrow-up"></i> %14.2</span>
-          </div>
+          <div class="s-data"><span class="s-label">AYLIK GELİR</span><h3 class="s-value">{{stats.monthlyRevenue | number}} ₺</h3><span class="s-trend"><i class="fas fa-arrow-up"></i> %14.2</span></div>
           <i class="fas fa-wallet s-icon"></i>
         </div>
-        
         <div class="stat-card orange" (click)="changeView('products')" style="cursor:pointer;">
-          <div class="s-data">
-            <span class="s-label">KRİTİK STOK</span>
-            <h3 class="s-value">{{stats.criticalStock}} Ürün</h3>
-            <span class="s-status danger">Acil Eylem</span>
-          </div>
+          <div class="s-data"><span class="s-label">KRİTİK STOK</span><h3 class="s-value">{{stats.criticalStock}} Ürün</h3><span class="s-status danger">Acil Eylem</span></div>
           <i class="fas fa-exclamation-circle s-icon"></i>
         </div>
-
         <div class="stat-card cyan">
-          <div class="s-data">
-            <span class="s-label">AKTİF MÜŞTERİ</span>
-            <h3 class="s-value">{{stats.totalCustomers}}</h3>
-            <span class="s-trend"><i class="fas fa-user-plus"></i> +5 Bugün</span>
-          </div>
+          <div class="s-data"><span class="s-label">TOPLAM KULLANICI</span><h3 class="s-value">{{stats.totalCustomers}}</h3><span class="s-trend"><i class="fas fa-user-plus"></i> Aktif</span></div>
           <i class="fas fa-users s-icon"></i>
         </div>
       </div>
-
       <div class="dashboard-bottom">
         <div class="chart-box">
           <div class="box-head"><h3>Satış Analizi</h3></div>
-          <div class="chart-container" style="position: relative; height:300px; width:100%">
-            <canvas id="salesChart"></canvas>
-          </div>
+          <div class="chart-container" style="position: relative; height:300px; width:100%"><canvas id="salesChart"></canvas></div>
         </div>
         <div class="quick-box">
           <h3>Hızlı İşlemler</h3>
           <button class="q-btn primary" (click)="changeView('addProduct')"><i class="fas fa-plus"></i> Yeni Ürün Ekle</button>
-          <button class="q-btn" style="background: #ecfdf5; color: #059669; border: 1px solid #10b981;" (click)="approveAllOrders()">
-            <i class="fas fa-shipping-fast"></i> Tümünü Kargola
-          </button>
-          <button class="q-btn" (click)="changeView('coupons')"><i class="fas fa-ticket-alt"></i> Kupon Oluştur</button>
+          <button class="q-btn" style="margin-top: 10px;" (click)="changeView('categories')"><i class="fas fa-layer-group"></i> Kategori Ekle</button>
+          <button class="q-btn" style="margin-top: 10px;" (click)="changeView('brands')"><i class="fas fa-trademark"></i> Marka Ekle</button>
+          <button class="q-btn" style="margin-top: 10px;" (click)="changeView('banners')"><i class="fas fa-images"></i> Banner Yönet</button>
+          <button class="q-btn" style="margin-top: 10px;" (click)="changeView('employees')"><i class="fas fa-user-tie"></i> Çalışan Ekle</button>
+          <button class="q-btn" style="margin-top: 10px;" (click)="goToCompanySettings()"><i class="fas fa-cog"></i> Şirket Ayarları</button>
         </div>
       </div>
-
       <div class="log-section" style="margin-top: 30px;">
-        <div class="section-header">
-          <h3><i class="fas fa-history"></i> Son Sistem Hareketleri</h3>
-        </div>
+        <div class="section-header"><h3><i class="fas fa-history"></i> Son Sistem Hareketleri</h3></div>
         <div class="log-list">
           <div class="log-item" *ngFor="let log of systemLogs">
             <span class="log-time">{{log.time}}</span>
@@ -154,314 +125,425 @@
             <span class="log-action">{{log.action}}</span>
             <span class="log-tag" [ngClass]="log.type">{{log.type}}</span>
           </div>
+          <div *ngIf="systemLogs.length === 0" style="text-align:center; padding: 20px; color: #94a3b8;">Henüz sistem hareketi yok.</div>
         </div>
       </div>
     </section>
 
-    <section *ngIf="view === 'coupons'" class="fade-in">
-      <div class="product-form-card" style="margin-bottom: 30px;">
-        <div class="form-title">Yeni İndirim Kuponu Oluştur</div>
-        <div class="form-grid">
-          <div class="form-group"><label>Kupon Kodu</label><input type="text" [(ngModel)]="newCoupon.code" placeholder="Örn: BIRADERIM20"></div>
-          <div class="form-group"><label>İndirim Oranı (%)</label><input type="number" [(ngModel)]="newCoupon.discount" placeholder="20"></div>
-          <div class="form-group" style="display: flex; align-items: flex-end;">
-            <button class="q-btn primary w-100" (click)="addCoupon()">Kuponu Tanımla</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="table-card">
-        <table class="premium-table">
-          <thead>
-            <tr><th>Kupon Kodu</th><th>İndirim</th><th>Durum</th><th class="text-right">İşlem</th></tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let c of coupons; let i = index">
-              <td><strong>{{c.code}}</strong></td>
-              <td><span class="tag" style="background: #dcfce7; color: #166534;">%{{c.discount}} İndirim</span></td>
-              <td><span class="tag" style="background: #f0f9ff; color: #0369a1;">Aktif</span></td>
-              <td class="text-right">
-<button class="btn-icon delete" (click)="deleteCoupon(i)">
-  <i class="fas fa-trash"></i>
-</button>              </td>
-            </tr>
-            <tr *ngIf="coupons.length === 0">
-              <td colspan="4" style="text-align: center; padding: 20px; color: #64748b;">Henüz tanımlı kupon bulunmuyor.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
+    <!-- ÜRÜNLER -->
     <section *ngIf="view === 'products'" class="fade-in">
       <div class="table-controls" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
         <input type="text" [(ngModel)]="searchTerm" placeholder="Ürün ara..." class="premium-input" style="flex: 2;">
-        
         <select [(ngModel)]="selectedCategory" class="premium-input" style="flex: 1;">
           <option value="Hepsi">Tüm Kategoriler</option>
-          <option *ngFor="let cat of categories" [value]="cat">{{cat}}</option>
+          <option *ngFor="let cat of categories" [value]="cat.name || cat">{{cat.name || cat}}</option>
         </select>
-
-        <select [(ngModel)]="sortType" class="premium-input" style="flex: 1;">
-          <option value="newest">En Yeniler</option>
-          <option value="priceLow">Fiyat: Artan</option>
-          <option value="priceHigh">Fiyat: Azalan</option>
-        </select>
-
         <button class="q-btn primary" style="width: auto;" (click)="changeView('addProduct')">Yeni Ürün</button>
       </div>
-
       <div class="table-card">
         <table class="premium-table">
-          <thead>
-            <tr><th>Görsel</th><th>Ürün</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th class="text-right">İşlem</th></tr>
-          </thead>
+          <thead><tr><th>Görsel</th><th>Ürün</th><th>Kategori</th><th>Marka</th><th>Fiyat</th><th>Stok</th><th class="text-right">İşlem</th></tr></thead>
           <tbody>
             <tr *ngFor="let p of filteredProducts">
-              <td><img [src]="p.img" class="p-thumb"></td>
+              <td><img [src]="p.img || p.imageUrl || 'https://picsum.photos/200'" class="p-thumb"></td>
               <td><strong>{{p.name}}</strong></td>
               <td><span class="tag">{{p.category}}</span></td>
+              <td><span class="tag" style="background:#e0e7ff; color:#4338ca;">{{p.brandName || '-'}}</span></td>
               <td><strong>{{p.price | number}} ₺</strong></td>
-              <td>
-                <span [ngClass]="{'stock-alert-active': p.stock < 10}">
-                  {{p.stock}} Adet
-                  <i *ngIf="p.stock < 10" class="fas fa-exclamation-triangle"></i>
-                </span>
-              </td>
+              <td><span [ngClass]="{'stock-alert-active': p.stock < 10}">{{p.stock}} Adet <i *ngIf="p.stock < 10" class="fas fa-exclamation-triangle"></i></span></td>
               <td class="text-right">
                 <button class="btn-icon edit" (click)="editProduct(p)"><i class="fas fa-edit"></i></button>
                 <button class="btn-icon delete" (click)="deleteProduct(p.id)"><i class="fas fa-trash"></i></button>
               </td>
             </tr>
+            <tr *ngIf="filteredProducts.length === 0"><td colspan="7" style="text-align: center; padding: 20px; color: #94a3b8;">Ürün bulunamadı.</td></tr>
           </tbody>
         </table>
       </div>
     </section>
 
-    <section *ngIf="view === 'users'" class="fade-in">
-      <div class="table-card">
-        <table class="premium-table">
-          <thead>
-            <tr><th>ID</th><th>E-Posta</th><th>Toplam Harcama</th><th>Durum</th><th class="text-right">İşlem</th></tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let u of users">
-              <td>#{{u.id}}</td>
-              <td><strong>{{u.email}}</strong></td>
-              <td><strong style="color: #10b981;">{{ getUserTotalSpend(u.email) | currency:'TRY':'symbol':'1.2-2' }}</strong></td>
-              <td><span class="tag" [style.background]="u.status === 'Aktif' ? '#22c55e' : '#ef4444'">{{u.status}}</span></td>
-              <td class="text-right">
-                <button *ngIf="currentUser && currentUser.role === 'Super Admin'" class="btn-icon approve" (click)="makeAdmin(u)"><i class="fas fa-user-plus" style="color: #6366f1;"></i></button>
-                <button class="btn-icon delete" (click)="removeUser(u.id)"><i class="fas fa-trash"></i></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section *ngIf="view === 'messages'" class="fade-in">
-      <div class="message-list">
-        <div *ngFor="let msg of messages" class="message-card" [ngClass]="{'unread': msg.status === 'unread'}">
-          <div class="message-header">
-            <span class="sender"><i class="fas fa-user-circle"></i> {{msg.sender}}</span>
-            <span class="date">{{msg.date}}</span>
-          </div>
-          <div class="message-subject"><strong>Konu:</strong> {{msg.subject}}</div>
-          <p class="message-content">{{msg.content}}</p>
-          <div class="message-actions" style="margin-top: 15px; display: flex; gap: 10px;">
-            <button (click)="readMessage(msg)" *ngIf="msg.status === 'unread'" class="q-btn primary" style="padding: 5px 15px; font-size: 12px;">Okundu İşaretle</button>
-            <button (click)="deleteMessage(msg.id)" class="q-btn" style="padding: 5px 15px; font-size: 12px; background: #fee2e2; color: #ef4444;">Sil</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section *ngIf="view === 'orders'" class="fade-in">
-      <div class="table-card">
-        <table class="premium-table">
-          <thead>
-            <tr><th>No</th><th>Müşteri</th><th>İçerik</th><th>Tutar</th><th>Tarih</th><th>Durum</th><th class="text-right">İşlem</th></tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let o of orders" (click)="openOrderDetails(o)" style="cursor: pointer;">
-              <td><strong>{{o.id || o.no}}</strong></td>
-              <td>{{o.user || o.customer}}</td>
-              <td><small>{{o.items || o.content}}</small></td>
-              <td><strong>{{o.total | number}} ₺</strong></td>
-              <td>{{o.date}}</td>
-              <td><span [class]="'tag ' + (o.status === 'Hazırlanıyor' ? 'cat-aksesuar' : (o.status === 'Kargolandı' ? 'cat-elektronik' : 'cat-spor'))">{{o.status}}</span></td>
-              <td class="text-right" (click)="$event.stopPropagation()">
-                <button *ngIf="o.status === 'Hazırlanıyor'" class="btn-icon approve" (click)="updateOrderStatus(o.id || o.no, 'Kargolandı')"><i class="fas fa-truck"></i></button>
-                <button *ngIf="o.status === 'Kargolandı'" class="btn-icon approve" (click)="updateOrderStatus(o.id || o.no, 'Teslim Edildi')"><i class="fas fa-check-double"></i></button>
-                <button class="btn-icon delete" (click)="deleteOrder(o.id || o.no)"><i class="fas fa-times"></i></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section *ngIf="view === 'categories'" class="fade-in">
-      <div class="product-form-card" style="max-width: 500px; margin-bottom: 30px;">
-        <div class="form-title">Yeni Kategori Tanımla</div>
-        <div class="form-group">
-          <label>Kategori İsmi</label>
-          <div style="display: flex; gap: 10px;">
-            <input type="text" [(ngModel)]="newCategoryName" placeholder="Örn: Aksesuar..." class="premium-input">
-            <button class="q-btn primary" (click)="addCategory()">Ekle</button>
-          </div>
-        </div>
-      </div>
-      <div class="nexus-cat-grid">
-        <div class="cat-item-modern" *ngFor="let cat of categories">
-          <div class="cat-info">
-            <span style="font-size: 20px; margin-right: 10px;">📁</span>
-            <span style="font-weight: 700; color: #1e293b;">{{cat}}</span>
-          </div>
-          <button class="btn-icon delete" (click)="deleteCategory(cat)"><i class="fas fa-times"></i></button>
-        </div>
-      </div>
-    </section>
-
-    <section *ngIf="view === 'admins'" class="fade-in">
-      <div class="table-card">
-        <div class="table-header" style="padding: 20px; border-bottom: 1px solid #f1f5f9;">
-          <h3 style="margin: 0; color: #1e293b;">Yetkili Listesi</h3>
-        </div>
-        <table class="premium-table">
-          <thead>
-            <tr><th>ID</th><th>Yetkili İsmi</th><th>E-Posta</th><th>Rolü</th><th class="text-right" *ngIf="currentUser && currentUser.role === 'Super Admin'">Yönetim</th></tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let a of admins">
-              <td>#{{a.id}}</td><td><strong>{{a.name}}</strong></td><td>{{a.email}}</td>
-              <td><span class="tag" style="background: #e0e7ff; color: #4338ca;">{{a.role}}</span></td>
-              <td class="text-right" *ngIf="currentUser && currentUser.role === 'Super Admin'">
-                <button class="btn-icon delete" (click)="deleteAdmin(a.id)" *ngIf="currentUser && a.email !== currentUser.email">
-                  <i class="fas fa-user-minus"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section *ngIf="view === 'comments'" class="fade-in">
-      <div class="table-card">
-        <table class="premium-table">
-          <thead>
-            <tr><th>Ürün</th><th>Müşteri</th><th>Yorum</th><th>Tarih</th><th>Durum</th><th class="text-right">İşlem</th></tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let c of comments">
-              <td><span class="tag">{{c.product}}</span></td>
-              <td><strong>{{c.user}}</strong></td>
-              <td><p style="max-width: 300px; font-style: italic; font-size: 13px; color: #64748b;">"{{c.text}}"</p></td>
-              <td>{{c.date}}</td>
-              <td><span class="tag" [ngClass]="c.status === 'approved' ? 'cat-spor' : 'cat-kitap'">{{c.status}}</span></td>
-              <td class="text-right">
-                <button *ngIf="c.status === 'pending'" class="btn-icon approve" (click)="approveComment(c.id)"><i class="fas fa-check"></i></button>
-                <button class="btn-icon delete" (click)="rejectComment(c.id)"><i class="fas fa-trash"></i></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
+    <!-- ÜRÜN EKLE -->
     <section *ngIf="view === 'addProduct'" class="fade-in">
       <div class="product-form-card">
         <div class="form-title">Yeni Ürün Bilgileri</div>
         <div class="form-grid">
-          <div class="form-group full-width"><label>Ürün Adı</label><input type="text" [(ngModel)]="newProduct.name"></div>
-          <div class="form-group"><label>Kategori</label><select [(ngModel)]="newProduct.category"><option *ngFor="let cat of categories" [value]="cat">{{cat}}</option></select></div>
-          <div class="form-group"><label>Fiyat (₺)</label><input type="number" [(ngModel)]="newProduct.price"></div>
-          <div class="form-group"><label>Stok</label><input type="number" [(ngModel)]="newProduct.stock"></div>
-          
+          <div class="form-group full-width"><label>Ürün Adı</label><input type="text" [(ngModel)]="newProduct.name" class="premium-input"></div>
+          <div class="form-group">
+            <label>Kategori</label>
+            <select [(ngModel)]="newProduct.category" class="premium-input">
+              <option value="">Kategori seç...</option>
+              <option *ngFor="let cat of categories" [value]="cat.name || cat">{{cat.name || cat}}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Marka</label>
+            <select [(ngModel)]="newProduct.brandId" class="premium-input">
+              <option [ngValue]="null">Marka seç (opsiyonel)</option>
+              <option *ngFor="let b of brands" [ngValue]="b.id">{{b.name}}</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Fiyat (₺)</label><input type="number" [(ngModel)]="newProduct.price" class="premium-input"></div>
+          <div class="form-group"><label>Stok</label><input type="number" [(ngModel)]="newProduct.stock" class="premium-input"></div>
+          <div class="form-group full-width"><label>Açıklama</label><textarea [(ngModel)]="newProduct.description" class="premium-input" rows="3"></textarea></div>
           <div class="form-group full-width">
             <label>Ürün Görseli</label>
-            <div class="custom-file-upload" style="display: flex; flex-direction: column; gap: 8px;">
-              <input type="file" (change)="onFileSelected($event)" class="premium-input" accept="image/*" style="padding: 8px;">
-              <small style="color: #64748b;">Veya görsel linki yapıştırın:</small>
-              <input type="text" [(ngModel)]="newProduct.img" class="premium-input" placeholder="https://...">
+            <div class="upload-area" [class.uploading]="uploadingImage">
+              <div class="img-preview" *ngIf="newProduct.img">
+                <img [src]="newProduct.img" alt="Önizleme">
+                <button class="remove-img" type="button" (click)="newProduct.img = ''"><i class="fas fa-times"></i></button>
+              </div>
+              <label class="upload-btn" *ngIf="!newProduct.img && !uploadingImage">
+                <input type="file" (change)="onFileSelected($event)" accept="image/*" style="display:none;">
+                <i class="fas fa-cloud-upload-alt"></i><span>Görsel Seç</span><small>JPG, PNG, WebP — Max 5MB</small>
+              </label>
+              <div class="upload-loading" *ngIf="uploadingImage"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</div>
+              <ng-container *ngIf="!newProduct.img && !uploadingImage">
+                <div class="or-divider"><span>veya URL ile ekle</span></div>
+                <input type="text" [(ngModel)]="newProduct.img" class="premium-input" placeholder="https://görsel-linki.com/img.jpg" style="margin-top: 8px;">
+              </ng-container>
             </div>
           </div>
         </div>
-        
-        <div class="image-preview-container" style="margin-top: 20px; text-align: center;">
-          <label style="display: block; margin-bottom: 10px; font-weight: 600;">Resim Önizleme</label>
-          <img [src]="newProduct.img || 'https://via.placeholder.com/300x200?text=Nexus+Core'" 
-               class="img-fluid rounded border" style="max-height: 200px; width: auto; object-fit: contain; border: 2px solid #e2e8f0; border-radius: 12px;">
-        </div>
-
         <div class="form-actions" style="margin-top: 20px;">
-          <button class="q-btn" (click)="view = 'products'">Vazgeç</button>
-          <button class="q-btn primary" (click)="saveProduct()">Kaydet</button>
+          <button class="q-btn" (click)="changeView('products')">İptal</button>
+          <button class="q-btn primary" (click)="saveProduct()"><i class="fas fa-check"></i> Ürünü Kaydet</button>
         </div>
       </div>
     </section>
 
+    <!-- ÜRÜN DÜZENLE -->
     <section *ngIf="view === 'edit-product' && editingProduct" class="fade-in">
       <div class="product-form-card">
         <div class="form-title">Ürünü Güncelle: {{editingProduct.name}}</div>
         <div class="form-grid">
-          <div class="form-group full-width"><label>Ürün Adı</label><input type="text" [(ngModel)]="editingProduct.name"></div>
-          <div class="form-group"><label>Kategori</label><select [(ngModel)]="editingProduct.category"><option *ngFor="let cat of categories" [value]="cat">{{cat}}</option></select></div>
-          <div class="form-group"><label>Fiyat (₺)</label><input type="number" [(ngModel)]="editingProduct.price"></div>
-          <div class="form-group"><label>Stok</label><input type="number" [(ngModel)]="editingProduct.stock"></div>
-          
-          <div class="form-group full-width">
-            <label>Ürün Görselini Güncelle</label>
-            <div class="custom-file-upload" style="display: flex; flex-direction: column; gap: 8px;">
-              <input type="file" (change)="onFileSelected($event)" class="premium-input" accept="image/*" style="padding: 8px;">
-              <small style="color: #64748b;">Mevcut veya yeni görsel linki:</small>
-              <input type="text" [(ngModel)]="editingProduct.img" class="premium-input">
-            </div>
+          <div class="form-group full-width"><label>Ürün Adı</label><input type="text" [(ngModel)]="editingProduct.name" class="premium-input"></div>
+          <div class="form-group">
+            <label>Kategori</label>
+            <select [(ngModel)]="editingProduct.category" class="premium-input">
+              <option *ngFor="let cat of categories" [value]="cat.name || cat">{{cat.name || cat}}</option>
+            </select>
           </div>
+          <div class="form-group">
+            <label>Marka</label>
+            <select [(ngModel)]="editingProduct.brandId" class="premium-input">
+              <option [ngValue]="null">Marka seç (opsiyonel)</option>
+              <option *ngFor="let b of brands" [ngValue]="b.id">{{b.name}}</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Fiyat (₺)</label><input type="number" [(ngModel)]="editingProduct.price" class="premium-input"></div>
+          <div class="form-group"><label>Stok</label><input type="number" [(ngModel)]="editingProduct.stock" class="premium-input"></div>
+          <div class="form-group full-width"><label>Görsel URL</label><input type="text" [(ngModel)]="editingProduct.img" class="premium-input"></div>
+          <div class="form-group full-width"><label>Açıklama</label><textarea [(ngModel)]="editingProduct.description" class="premium-input" rows="3"></textarea></div>
         </div>
-        
-        <div class="image-preview-container" style="margin-top: 20px; text-align: center;">
-          <label style="display: block; margin-bottom: 10px; font-weight: 600;">Görsel Önizleme</label>
-          <img [src]="editingProduct.img || 'https://via.placeholder.com/300x200?text=Nexus+Core'" 
-               class="img-fluid rounded border" style="max-height: 200px; width: auto; object-fit: contain; border: 2px solid #e2e8f0; border-radius: 12px;">
+        <div style="margin-top: 20px; text-align: center;">
+          <img [src]="editingProduct.img || editingProduct.imageUrl || 'https://picsum.photos/300/200'" style="max-height: 200px; border-radius: 12px; border: 2px solid #e2e8f0;">
         </div>
-
         <div class="form-actions" style="margin-top: 20px;">
-          <button class="q-btn" (click)="view = 'products'">İptal</button>
+          <button class="q-btn" (click)="changeView('products')">İptal</button>
           <button class="q-btn primary" (click)="updateProduct()">Değişiklikleri Kaydet</button>
         </div>
       </div>
     </section>
 
+    <!-- KATEGORİLER -->
+    <section *ngIf="view === 'categories'" class="fade-in">
+      <div class="product-form-card" style="margin-bottom: 24px; max-width:100%;">
+        <div class="form-title">Yeni Kategori Ekle</div>
+        <div style="display: flex; gap: 12px; align-items: flex-end;">
+          <div class="form-group" style="flex: 2; margin: 0;"><label>Kategori Adı</label><input type="text" [(ngModel)]="newCategoryName" class="premium-input" placeholder="Örn: Elektronik"></div>
+          <div class="form-group" style="flex: 2; margin: 0;"><label>Açıklama</label><input type="text" [(ngModel)]="newCategoryDescription" class="premium-input" placeholder="Kısa açıklama"></div>
+          <button class="q-btn primary" style="width: auto; height: 42px;" (click)="saveCategory()"><i class="fas fa-plus"></i> Ekle</button>
+        </div>
+      </div>
+      <div class="table-card">
+        <table class="premium-table">
+          <thead><tr><th>ID</th><th>Kategori Adı</th><th>Açıklama</th><th class="text-right">İşlem</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let cat of categories">
+              <td>#{{cat.id}}</td><td><strong>{{cat.name}}</strong></td><td>{{cat.description || '-'}}</td>
+              <td class="text-right"><button class="btn-icon delete" (click)="deleteCategory(cat.id)"><i class="fas fa-trash"></i></button></td>
+            </tr>
+            <tr *ngIf="categories.length === 0"><td colspan="4" style="text-align: center; padding: 30px; color: #94a3b8;">Henüz kategori eklenmemiş.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- MARKALAR -->
+    <section *ngIf="view === 'brands'" class="fade-in">
+      <div class="product-form-card" style="margin-bottom: 24px; max-width:100%;">
+        <div class="form-title">Yeni Marka Ekle</div>
+        <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+          <div class="form-group" style="flex: 2; margin: 0;"><label>Marka Adı</label><input type="text" [(ngModel)]="newBrand.name" class="premium-input" placeholder="Örn: Nike"></div>
+          <div class="form-group" style="flex: 2; margin: 0;"><label>Açıklama</label><input type="text" [(ngModel)]="newBrand.description" class="premium-input" placeholder="Kısa açıklama"></div>
+          <div class="form-group" style="flex: 3; margin: 0;"><label>Logo URL</label><input type="text" [(ngModel)]="newBrand.logoUrl" class="premium-input" placeholder="https://logo.png"></div>
+          <button class="q-btn primary" style="width: auto; height: 42px;" (click)="saveBrand()"><i class="fas fa-plus"></i> Ekle</button>
+        </div>
+      </div>
+      <div class="table-card">
+        <table class="premium-table">
+          <thead><tr><th>Logo</th><th>Marka Adı</th><th>Açıklama</th><th class="text-right">İşlem</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let b of brands">
+              <td><img *ngIf="b.logoUrl" [src]="b.logoUrl" style="width:40px; height:40px; object-fit:contain; border-radius:6px;"><span *ngIf="!b.logoUrl" style="color:#94a3b8;">-</span></td>
+              <td><strong>{{b.name}}</strong></td><td>{{b.description || '-'}}</td>
+              <td class="text-right"><button class="btn-icon delete" (click)="deleteBrand(b.id)"><i class="fas fa-trash"></i></button></td>
+            </tr>
+            <tr *ngIf="brands.length === 0"><td colspan="4" style="text-align: center; padding: 30px; color: #94a3b8;">Henüz marka eklenmemiş.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ✅ BANNER / SLIDER — KART GÖRÜNÜMÜ -->
+    <section *ngIf="view === 'banners'" class="fade-in">
+      <div class="product-form-card" style="max-width:100%; margin-bottom: 32px;">
+        <div class="form-title"><i class="fas fa-images" style="color:#6366f1; margin-right:8px;"></i> Yeni Banner Ekle</div>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Banner Başlığı</label>
+            <input type="text" [(ngModel)]="newBanner.title" class="premium-input" placeholder="Örn: Yaz İndirimi %50">
+          </div>
+          <div class="form-group full-width">
+            <label>Görsel URL</label>
+            <input type="text" [(ngModel)]="newBanner.imageUrl" class="premium-input" placeholder="https://görsel-url.com/banner.jpg">
+          </div>
+          <!-- Canlı önizleme -->
+          <div class="form-group full-width" *ngIf="newBanner.imageUrl">
+            <label>Önizleme</label>
+            <div class="banner-preview-wrap">
+              <img [src]="newBanner.imageUrl" alt="Önizleme" (error)="newBanner.imageUrl=''">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Link (opsiyonel)</label>
+            <input type="text" [(ngModel)]="newBanner.link" class="premium-input" placeholder="https://site.com/kampanya">
+          </div>
+          <div class="form-group">
+            <label>Sıra No</label>
+            <input type="number" [(ngModel)]="newBanner.order" class="premium-input" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Durum</label>
+            <select [(ngModel)]="newBanner.isActive" class="premium-input">
+              <option [ngValue]="true">✅ Aktif</option>
+              <option [ngValue]="false">⏸ Pasif</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top: 16px;">
+          <button class="q-btn primary" style="width: auto;" (click)="saveBanner()" [disabled]="bannerSaving">
+            <i class="fas" [ngClass]="bannerSaving ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
+            {{ bannerSaving ? 'Ekleniyor...' : 'Banner Ekle' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Banner Kart Listesi -->
+      <div *ngIf="banners.length === 0" class="banner-empty">
+        <i class="fas fa-images"></i>
+        <p>Henüz banner eklenmemiş.<br>Yukarıdaki formu kullanarak ilk bannerı ekle.</p>
+      </div>
+
+      <div class="banner-grid" *ngIf="banners.length > 0">
+        <div class="banner-card" *ngFor="let b of banners">
+          <img [src]="b.imageUrl" class="banner-card-img" alt="{{b.title}}" onerror="this.src='https://via.placeholder.com/400x160?text=Görsel+Yok'">
+          <div class="banner-card-body">
+            <div class="banner-card-title">{{b.title}}</div>
+            <div class="banner-card-meta">
+              <span class="banner-order-badge"># Sıra: {{b.order}}</span>
+              <button class="banner-status-toggle" [class.active]="b.isActive" [class.inactive]="!b.isActive" (click)="toggleBannerActive(b)">
+                {{ b.isActive ? '✅ Aktif' : '⏸ Pasif' }}
+              </button>
+            </div>
+            <div *ngIf="b.link" style="font-size:12px; color:#6366f1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              <i class="fas fa-link"></i> {{b.link}}
+            </div>
+          </div>
+          <div class="banner-card-actions">
+            <button class="btn-icon delete" style="flex:1; width:auto; padding: 0 12px; border-radius:10px;" (click)="deleteBanner(b.id)">
+              <i class="fas fa-trash"></i> Sil
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KULLANICILAR -->
+    <section *ngIf="view === 'users'" class="fade-in">
+      <div class="table-card">
+        <table class="premium-table">
+          <thead><tr><th>ID</th><th>Ad Soyad</th><th>E-Posta</th><th>Rol</th><th>Kayıt Tarihi</th><th class="text-right">İşlem</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let u of users">
+              <td>#{{u.id}}</td><td><strong>{{u.fullName || 'Belirtilmedi'}}</strong></td><td>{{u.email}}</td>
+              <td><span class="tag" [style.background]="getRoleColor(u.role)" style="color:white;">{{u.role || 'Kullanıcı'}}</span></td>
+              <td>{{u.registeredAt | date:'shortDate'}}</td>
+              <td class="text-right"><button class="btn-icon delete" (click)="deleteEmployee(u.id)" [disabled]="u.email === currentUser.email"><i class="fas fa-trash"></i></button></td>
+            </tr>
+            <tr *ngIf="users.length === 0"><td colspan="6" style="text-align: center; padding: 20px; color: #94a3b8;">Henüz kullanıcı yok.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SİPARİŞLER -->
+    <section *ngIf="view === 'orders'" class="fade-in">
+      <div class="order-stats-row">
+        <div class="o-stat" style="border-left: 4px solid #f59e0b;"><span class="o-stat-num">{{orders.length}}</span><span class="o-stat-label">Toplam</span></div>
+        <div class="o-stat" style="border-left: 4px solid #6366f1;"><span class="o-stat-num">{{getOrderCount('Beklemede')}}</span><span class="o-stat-label">Beklemede</span></div>
+        <div class="o-stat" style="border-left: 4px solid #0ea5e9;"><span class="o-stat-num">{{getOrderCount('Kargoda')}}</span><span class="o-stat-label">Kargoda</span></div>
+        <div class="o-stat" style="border-left: 4px solid #22c55e;"><span class="o-stat-num">{{getOrderCount('Teslim Edildi')}}</span><span class="o-stat-label">Teslim Edildi</span></div>
+      </div>
+      <div class="table-card">
+        <table class="premium-table">
+          <thead><tr><th>No</th><th>Müşteri</th><th>Tutar</th><th>Tarih</th><th>Durum</th><th class="text-right">İşlem</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let o of orders" (click)="openOrderDetails(o)" style="cursor: pointer;">
+              <td><strong>#{{o.id}}</strong></td>
+              <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <div style="width:30px; height:30px; border-radius:50%; background:#e0e7ff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#6366f1;">{{(o.userName || 'M').charAt(0).toUpperCase()}}</div>
+                  {{o.userName || o.userId}}
+                </div>
+              </td>
+              <td><strong style="color:#10b981;">{{o.totalPrice | number}} ₺</strong></td>
+              <td>{{o.createdAt | date:'dd.MM.yyyy'}}</td>
+              <td (click)="$event.stopPropagation()">
+                <select class="status-select" [ngClass]="getOrderStatusClass(o.status)" [(ngModel)]="o.status" (change)="updateOrderStatus(o.id, o.status)">
+                  <option value="Beklemede">⏳ Beklemede</option>
+                  <option value="Hazırlanıyor">📦 Hazırlanıyor</option>
+                  <option value="Kargoda">🚚 Kargoda</option>
+                  <option value="Teslim Edildi">✅ Teslim Edildi</option>
+                  <option value="İptal Edildi">❌ İptal Edildi</option>
+                </select>
+              </td>
+              <td class="text-right" (click)="$event.stopPropagation()">
+                <button class="btn-icon delete" (click)="deleteOrder(o.id)"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr *ngIf="orders.length === 0"><td colspan="6" style="text-align: center; padding: 40px; color: #94a3b8;"><i class="fas fa-box-open" style="font-size:40px; display:block; margin-bottom:12px; opacity:0.3;"></i>Henüz sipariş yok.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- YORUMLAR -->
+    <section *ngIf="view === 'comments'" class="fade-in">
+      <div class="table-card">
+        <table class="premium-table">
+          <thead><tr><th>Ürün ID</th><th>Müşteri</th><th>Yorum</th><th>Puan</th><th>Durum</th><th class="text-right">İşlem</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let c of comments">
+              <td><span class="tag">#{{c.productId}}</span></td>
+              <td><strong>{{c.userName || '#' + c.userId}}</strong></td>
+              <td><p style="max-width: 300px; font-style: italic; font-size: 13px; color: #64748b;">"{{c.text}}"</p></td>
+              <td>⭐ {{c.rating}}/5</td>
+              <td>
+                <span class="tag"
+                  [style.background]="c.status === 'Onaylandı' ? '#dcfce7' : c.status === 'Reddedildi' ? '#fee2e2' : '#fef3c7'"
+                  [style.color]="c.status === 'Onaylandı' ? '#16a34a' : c.status === 'Reddedildi' ? '#dc2626' : '#d97706'">
+                  {{ c.status }}
+                </span>
+              </td>
+              <td class="text-right">
+                <button *ngIf="c.status !== 'Onaylandı'" class="btn-icon edit" title="Onayla" (click)="approveComment(c.id)"><i class="fas fa-check"></i></button>
+                <button *ngIf="c.status !== 'Reddedildi'" class="btn-icon" style="background:#fef3c7; color:#d97706;" title="Reddet" (click)="rejectComment(c.id)"><i class="fas fa-ban"></i></button>
+                <button class="btn-icon delete" title="Sil" (click)="deleteComment(c.id)"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr *ngIf="comments.length === 0"><td colspan="6" style="text-align: center; padding: 20px; color: #94a3b8;">Henüz yorum yok.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ÇALIŞANLAR -->
+    <section *ngIf="view === 'employees'" class="fade-in">
+      <div class="product-form-card" style="margin-bottom: 24px; max-width:100%;">
+        <div class="form-title"><i class="fas fa-user-plus"></i> Yeni Çalışan Ekle</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Ad Soyad</label><input type="text" [(ngModel)]="newEmployee.fullName" class="premium-input" placeholder="Ad Soyad"></div>
+          <div class="form-group"><label>E-posta</label><input type="email" [(ngModel)]="newEmployee.email" class="premium-input" placeholder="calisan@mail.com"></div>
+          <div class="form-group"><label>Şifre</label><input type="password" [(ngModel)]="newEmployee.password" class="premium-input" placeholder="Geçici şifre"></div>
+          <div class="form-group">
+            <label>Rol</label>
+            <select [(ngModel)]="newEmployee.role" class="premium-input">
+              <option value="Employee">Çalışan</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top: 16px;">
+          <button class="q-btn primary" style="width: auto;" (click)="saveEmployee()" [disabled]="employeeSaving">
+            <i class="fas" [ngClass]="employeeSaving ? 'fa-spinner fa-spin' : 'fa-user-plus'"></i>
+            {{ employeeSaving ? 'Ekleniyor...' : 'Çalışan Ekle' }}
+          </button>
+        </div>
+      </div>
+      <div class="table-card">
+        <table class="premium-table">
+          <thead><tr><th>ID</th><th>Ad Soyad</th><th>E-posta</th><th>Rol</th><th>Kayıt Tarihi</th><th class="text-right">İşlem</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let emp of employees">
+              <td><strong>#{{emp.id}}</strong></td>
+              <td>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:white; font-size:14px;" [style.background]="getRoleColor(emp.role)">{{(emp.fullName || 'A').charAt(0).toUpperCase()}}</div>
+                  <strong>{{emp.fullName || 'Belirtilmedi'}}</strong>
+                </div>
+              </td>
+              <td>{{emp.email}}</td>
+              <td><span class="tag" [style.background]="getRoleColor(emp.role)" style="color:white;">{{emp.role}}</span></td>
+              <td>{{emp.registeredAt | date:'dd.MM.yyyy'}}</td>
+              <td class="text-right"><button class="btn-icon delete" (click)="deleteEmployee(emp.id)" [disabled]="emp.email === currentUser.email"><i class="fas fa-trash"></i></button></td>
+            </tr>
+            <tr *ngIf="employees.length === 0"><td colspan="6" style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-user-tie" style="font-size:40px; margin-bottom:12px; display:block; opacity:0.3;"></i>Henüz çalışan eklenmemiş.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
   </main>
 
+  <!-- SİPARİŞ DETAY MODAL -->
   <div class="modal-overlay" *ngIf="selectedOrder" (click)="selectedOrder = null">
-    <div class="modal-content fade-in" (click)="$event.stopPropagation()">
+    <div class="modal-content fade-in" (click)="$event.stopPropagation()" style="max-width: 520px;">
       <div class="modal-header">
         <div class="header-info">
-          <h3>Sipariş Detayı: <span style="color: #6366f1;">{{selectedOrder.id || selectedOrder.no}}</span></h3>
-          <p>{{selectedOrder.date}} tarihinde oluşturuldu</p>
+          <h3>Sipariş <span style="color: #6366f1;">#{{selectedOrder.id}}</span></h3>
+          <p>{{selectedOrder.createdAt | date:'dd MMMM yyyy, HH:mm'}}</p>
         </div>
         <button class="close-btn" (click)="selectedOrder = null">×</button>
       </div>
       <div class="modal-body">
         <div class="order-grid">
-          <div class="order-section"><label><i class="fas fa-user"></i> Müşteri Bilgisi</label><p><strong>{{selectedOrder.user || selectedOrder.customer}}</strong></p></div>
-          <div class="order-section"><label><i class="fas fa-box"></i> Ürün Detayı</label><p>{{selectedOrder.items || selectedOrder.content}}</p></div>
-          <div class="order-section"><label><i class="fas fa-money-bill-wave"></i> Toplam Tutar</label><p style="font-size: 20px; color: #10b981; font-weight: 800;">{{selectedOrder.total | number}} ₺</p></div>
-          <div class="order-section">
-            <label><i class="fas fa-info-circle"></i> Durum</label>
-            <span class="tag" [ngClass]="{'cat-elektronik': selectedOrder.status === 'Kargolandı','cat-aksesuar': selectedOrder.status === 'Hazırlanıyor','cat-spor': selectedOrder.status === 'Teslim Edildi'}">{{selectedOrder.status}}</span>
+          <div class="order-section"><label><i class="fas fa-user"></i> Müşteri</label><p><strong>{{selectedOrder.userName || selectedOrder.userId}}</strong></p></div>
+          <div class="order-section"><label><i class="fas fa-money-bill-wave"></i> Toplam Tutar</label><p style="font-size: 22px; color: #10b981; font-weight: 800;">{{selectedOrder.totalPrice | number}} ₺</p></div>
+        </div>
+        <div style="margin-top: 20px;">
+          <label style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; display:block; margin-bottom:10px;"><i class="fas fa-truck"></i> Sipariş Durumunu Güncelle</label>
+          <div class="status-buttons">
+            <button class="status-btn" [class.active]="selectedOrder.status === 'Beklemede'" (click)="updateOrderStatus(selectedOrder.id, 'Beklemede'); selectedOrder.status = 'Beklemede'">⏳ Beklemede</button>
+            <button class="status-btn" [class.active]="selectedOrder.status === 'Hazırlanıyor'" (click)="updateOrderStatus(selectedOrder.id, 'Hazırlanıyor'); selectedOrder.status = 'Hazırlanıyor'">📦 Hazırlanıyor</button>
+            <button class="status-btn" [class.active]="selectedOrder.status === 'Kargoda'" (click)="updateOrderStatus(selectedOrder.id, 'Kargoda'); selectedOrder.status = 'Kargoda'">🚚 Kargoda</button>
+            <button class="status-btn success" [class.active]="selectedOrder.status === 'Teslim Edildi'" (click)="updateOrderStatus(selectedOrder.id, 'Teslim Edildi'); selectedOrder.status = 'Teslim Edildi'">✅ Teslim Edildi</button>
+            <button class="status-btn danger" [class.active]="selectedOrder.status === 'İptal Edildi'" (click)="updateOrderStatus(selectedOrder.id, 'İptal Edildi'); selectedOrder.status = 'İptal Edildi'">❌ İptal Edildi</button>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="q-btn" style="background: #f1f5f9; color: #475569;" (click)="selectedOrder = null">Kapat</button>
-        <button class="q-btn primary" (click)="updateOrderStatus(selectedOrder.id || selectedOrder.no, 'Teslim Edildi'); selectedOrder = null">Teslim Edildi İşaretle</button>
+        <button class="q-btn" style="background: #f1f5f9; color: #475569; width:auto;" (click)="selectedOrder = null">Kapat</button>
       </div>
     </div>
   </div>
 
+</div>
+
+<!-- YETKİSİZ KULLANICI -->
+<div *ngIf="currentUser && currentUser.role === 'Customer'" style="text-align:center; padding: 100px 20px;">
+  <i class="fas fa-lock" style="font-size: 64px; color: #e2e8f0; margin-bottom: 20px; display:block;"></i>
+  <h2 style="color: #1e293b;">Erişim Reddedildi</h2>
+  <p style="color: #94a3b8;">Bu sayfaya erişim yetkiniz yok.</p>
+  <a href="/home" style="color: #6366f1; font-weight: 700;">Ana sayfaya dön</a>
 </div>

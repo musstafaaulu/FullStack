@@ -1,7 +1,6 @@
 import { Component, OnInit, DoCheck } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { DataService } from '../services/data.service';
 
 @Component({
   selector: 'app-navbar',
@@ -15,27 +14,26 @@ export class NavbarComponent implements OnInit, DoCheck {
   currentUser: any = null;
   dropdownOpen: boolean = false;
 
-  constructor(private dataService: DataService, private router: Router) {}
+  constructor(public router: Router) {}
+
+  // ✅ Admin sayfasında navbar'ı gizle
+  get isAdminPage(): boolean {
+    return this.router.url.startsWith('/admin');
+  }
 
   ngOnInit() {
-    this.dataService.currentCartCount.subscribe((count: any) => {
-      this.cartCount = count;
-    });
-    this.updateUser();
+    this.updateState();
   }
 
   ngDoCheck() {
-    this.updateUser();
+    this.updateState();
   }
 
-  updateUser() {
-    // API'den gelen veriyi 'currentUser' altında saklamıştık
+  updateState() {
     const userJson = localStorage.getItem('currentUser');
-    
     if (userJson) {
       try {
         const parsedUser = JSON.parse(userJson);
-        // Eğer veri değiştiyse güncelle
         if (!this.currentUser || JSON.stringify(this.currentUser) !== JSON.stringify(parsedUser)) {
           this.currentUser = parsedUser;
         }
@@ -45,6 +43,13 @@ export class NavbarComponent implements OnInit, DoCheck {
     } else {
       this.currentUser = null;
     }
+
+    const cartJson = localStorage.getItem('cart');
+    const cart = cartJson ? JSON.parse(cartJson) : [];
+    const currentCount = cart.reduce((acc: any, item: any) => acc + item.quantity, 0);
+    if (this.cartCount !== currentCount) {
+      this.cartCount = currentCount;
+    }
   }
 
   toggleDropdown() {
@@ -53,16 +58,13 @@ export class NavbarComponent implements OnInit, DoCheck {
 
   logout() {
     this.dropdownOpen = false;
-    
-    // TEMİZLİK OPERASYONU: Bütün anahtarları siliyoruz
     localStorage.removeItem('currentUser');
-    localStorage.removeItem('nexus_token'); // Bileti de iptal et
+    localStorage.removeItem('nexus_token');
     localStorage.removeItem('user_role');
-    
     this.currentUser = null;
-    
+    this.cartCount = 0;
     this.router.navigate(['/login']).then(() => {
-      window.location.reload(); // Sayfayı tazele ki her şey sıfırlansın
+      window.location.reload();
     });
   }
 

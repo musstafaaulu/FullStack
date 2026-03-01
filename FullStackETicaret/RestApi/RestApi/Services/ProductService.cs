@@ -60,8 +60,9 @@ namespace RestApi.Services
             {
                 var product = _mapper.Map<Product>(dto);
                 
-                // Ürün oluşturulurken tarih bilgisini otomatik atıyoruz
-                product.CreatedDate = DateTime.Now; 
+                // HATA BURADAYDI: Product modelinde CreatedDate property'si yok.
+                // Kodu derleyebilmen için bu satırı yoruma aldım. 
+                // product.CreatedDate = DateTime.Now; 
                 
                 await _db.Products.AddAsync(product);
                 await _db.SaveChangesAsync();

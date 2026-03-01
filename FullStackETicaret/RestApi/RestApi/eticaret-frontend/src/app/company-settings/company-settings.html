@@ -1,0 +1,127 @@
+<!-- src/app/company-settings/company-settings.html -->
+
+<div class="cs-wrapper">
+
+  <!-- HEADER -->
+  <div class="cs-header">
+    <div>
+      <h1 class="cs-title">Şirket Ayarları</h1>
+      <p class="cs-sub">Şirketinizin genel bilgilerini güncelleyin</p>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-state" *ngIf="isLoading">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span>Yükleniyor...</span>
+  </div>
+
+  <div class="cs-grid" *ngIf="!isLoading">
+
+    <!-- SOL: FORM -->
+    <div class="cs-card">
+
+      <!-- Bildirimler -->
+      <div class="alert alert-success" *ngIf="successMsg">
+        <i class="fas fa-check-circle"></i> {{ successMsg }}
+      </div>
+      <div class="alert alert-error" *ngIf="errorMsg">
+        <i class="fas fa-exclamation-circle"></i> {{ errorMsg }}
+      </div>
+
+      <!-- Şirket Adı -->
+      <div class="field">
+        <label>Şirket Adı <span class="req">*</span></label>
+        <div class="input-wrap">
+          <i class="fas fa-building"></i>
+          <input type="text" [(ngModel)]="company.name" placeholder="Şirket adı">
+        </div>
+      </div>
+
+      <!-- E-posta -->
+      <div class="field">
+        <label>E-posta</label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope"></i>
+          <input type="email" [(ngModel)]="company.email" placeholder="info@sirketiniz.com">
+        </div>
+      </div>
+
+      <!-- Telefon -->
+      <div class="field">
+        <label>Telefon</label>
+        <div class="input-wrap">
+          <i class="fas fa-phone"></i>
+          <input type="text" [(ngModel)]="company.phone" placeholder="05XX XXX XX XX">
+        </div>
+      </div>
+
+      <!-- Adres -->
+      <div class="field">
+        <label>Adres</label>
+        <div class="input-wrap">
+          <i class="fas fa-map-marker-alt"></i>
+          <input type="text" [(ngModel)]="company.address" placeholder="İl, İlçe, Mahalle...">
+        </div>
+      </div>
+
+      <!-- Logo URL -->
+      <div class="field">
+        <label>Logo URL</label>
+        <div class="input-wrap">
+          <i class="fas fa-image"></i>
+          <input
+            type="text"
+            [(ngModel)]="company.logoUrl"
+            (ngModelChange)="onLogoUrlChange()"
+            placeholder="https://... veya aşağıdan yükleyin">
+        </div>
+      </div>
+
+      <!-- Logo Dosya Yükleme -->
+      <div class="field">
+        <label>Logo Yükle</label>
+        <div class="upload-area" (click)="fileInput.click()">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <span>Dosya seçmek için tıklayın</span>
+          <small>PNG, JPG, WEBP · Maks 5MB</small>
+        </div>
+        <input #fileInput type="file" accept="image/*" hidden (change)="onFileSelected($event)">
+      </div>
+
+      <!-- Kaydet -->
+      <button class="btn-save" (click)="save()" [disabled]="isSaving">
+        <i class="fas" [ngClass]="isSaving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+        {{ isSaving ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet' }}
+      </button>
+
+    </div>
+
+    <!-- SAĞ: ÖNIZLEME -->
+    <div class="cs-preview">
+
+      <div class="preview-card">
+        <p class="preview-label">Logo Önizleme</p>
+        <div class="logo-preview-box">
+          <img *ngIf="logoPreview" [src]="logoPreview" alt="Logo" class="logo-img">
+          <div class="logo-placeholder" *ngIf="!logoPreview">
+            <i class="fas fa-image"></i>
+            <span>Logo Yok</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <p class="info-card-title"><i class="fas fa-info-circle"></i> Bilgi</p>
+        <ul>
+          <li>Logo değişiklikleri mağaza vitrininde görünür.</li>
+          <li>E-posta adresi müşteri bildirimlerinde kullanılır.</li>
+          <li>Adres sipariş faturalarında yer alır.</li>
+        </ul>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

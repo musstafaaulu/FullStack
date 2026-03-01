@@ -1,0 +1,161 @@
+  <div class="login-wrapper">
+
+    <!-- SOL PANEL — BRAND -->
+    <div class="brand-panel">
+      <div class="brand-content">
+        <div class="brand-logo">
+          <div class="logo-mark">N</div>
+          <span class="logo-text">NEXUS</span>
+        </div>
+        <h1 class="brand-headline">Dijital Ticaretin<br><span class="highlight">Yeni Merkezi</span></h1>
+        <p class="brand-sub">Kendi mağazanı kur, ürünlerini yönet ve müşterilerine ulaş — tek platformda.</p>
+        <div class="brand-stats">
+          <div class="stat"><span class="stat-num">500+</span><span class="stat-label">Şirket</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat"><span class="stat-num">12K+</span><span class="stat-label">Ürün</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat"><span class="stat-num">98%</span><span class="stat-label">Memnuniyet</span></div>
+        </div>
+      </div>
+      <div class="brand-decoration">
+        <div class="circle c1"></div>
+        <div class="circle c2"></div>
+        <div class="circle c3"></div>
+      </div>
+    </div>
+
+    <!-- SAĞ PANEL — FORM -->
+    <div class="form-panel">
+      <div class="form-container">
+
+        <!-- TAB SEÇİCİ -->
+        <div class="tab-row">
+          <button class="tab" [class.active]="mode === 'login'" (click)="setMode('login')">Giriş Yap</button>
+          <button class="tab" [class.active]="mode === 'register-customer'" (click)="setMode('register-customer')">Üye Ol</button>
+          <button class="tab company-tab" [class.active]="mode === 'register-company'" (click)="setMode('register-company')">
+            <i class="fas fa-building"></i> Şirket Kur
+          </button>
+          <div class="tab-indicator" [style.left]="mode === 'login' ? '0%' : mode === 'register-customer' ? '33.33%' : '66.66%'"></div>
+        </div>
+
+        <!-- GİRİŞ FORMU -->
+        <div class="form-body" *ngIf="mode === 'login'">
+          <div class="form-header">
+            <h2>Hoş Geldin 👋</h2>
+            <p>Hesabına giriş yap</p>
+          </div>
+          <div class="field">
+            <label>E-posta</label>
+            <div class="input-wrap">
+              <i class="fas fa-envelope"></i>
+              <input type="email" [(ngModel)]="loginObj.email" placeholder="ornek@mail.com">
+            </div>
+          </div>
+          <div class="field">
+            <label>Şifre</label>
+            <div class="input-wrap">
+              <i class="fas fa-lock"></i>
+              <input type="password" [(ngModel)]="loginObj.password" placeholder="••••••••" (keyup.enter)="onLogin()">
+            </div>
+          </div>
+          <button class="submit-btn" (click)="onLogin()">
+            Giriş Yap <i class="fas fa-arrow-right"></i>
+          </button>
+          <p class="switch-text">
+            Hesabın yok mu?
+            <span (click)="setMode('register-customer')">Ücretsiz üye ol</span>
+          </p>
+        </div>
+
+        <!-- MÜŞTERİ KAYDI -->
+        <div class="form-body" *ngIf="mode === 'register-customer'">
+          <div class="form-header">
+            <h2>Hemen Başla ✨</h2>
+            <p>Ücretsiz hesap oluştur</p>
+          </div>
+          <div class="field">
+            <label>Ad Soyad</label>
+            <div class="input-wrap">
+              <i class="fas fa-user"></i>
+              <input type="text" [(ngModel)]="customerObj.name" placeholder="Adın ve soyadın">
+            </div>
+          </div>
+          <div class="field">
+            <label>E-posta</label>
+            <div class="input-wrap">
+              <i class="fas fa-envelope"></i>
+              <input type="email" [(ngModel)]="customerObj.email" placeholder="ornek@mail.com">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Şifre</label>
+              <div class="input-wrap">
+                <i class="fas fa-lock"></i>
+                <input type="password" [(ngModel)]="customerObj.password" placeholder="••••••">
+              </div>
+            </div>
+            <div class="field">
+              <label>Şifre Tekrar</label>
+              <div class="input-wrap">
+                <i class="fas fa-lock"></i>
+                <input type="password" [(ngModel)]="customerObj.confirmPassword" placeholder="••••••">
+              </div>
+            </div>
+          </div>
+          <button class="submit-btn" (click)="onCustomerRegister()">
+            Kayıt Ol <i class="fas fa-arrow-right"></i>
+          </button>
+          <p class="switch-text">
+            Zaten hesabın var mı?
+            <span (click)="setMode('login')">Giriş yap</span>
+          </p>
+        </div>
+
+        <!-- ŞİRKET KAYDI -->
+        <div class="form-body" *ngIf="mode === 'register-company'">
+          <div class="form-header">
+            <h2>Mağazanı Kur 🏪</h2>
+            <p>Kendi e-ticaret mağazanı oluştur</p>
+          </div>
+          <div class="field">
+            <label>Şirket Adı</label>
+            <div class="input-wrap">
+              <i class="fas fa-building"></i>
+              <input type="text" [(ngModel)]="registerObj.companyName" placeholder="Örn: Mustafa Ayakkabı">
+            </div>
+          </div>
+          <div class="field">
+            <label>Yetkili Adı</label>
+            <div class="input-wrap">
+              <i class="fas fa-user-tie"></i>
+              <input type="text" [(ngModel)]="registerObj.name" placeholder="Ad Soyad">
+            </div>
+          </div>
+          <div class="field">
+            <label>E-posta</label>
+            <div class="input-wrap">
+              <i class="fas fa-envelope"></i>
+              <input type="email" [(ngModel)]="registerObj.email" placeholder="ornek@mail.com">
+            </div>
+          </div>
+          <div class="field">
+            <label>Şifre</label>
+            <div class="input-wrap">
+              <i class="fas fa-lock"></i>
+              <input type="password" [(ngModel)]="registerObj.password" placeholder="••••••••">
+            </div>
+          </div>
+          <button class="submit-btn company-btn" (click)="onRegister()">
+            Şirketi Kur <i class="fas fa-arrow-right"></i>
+          </button>
+          <p class="switch-text">
+            Zaten hesabın var mı?
+            <span (click)="setMode('login')">Giriş yap</span>
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>

@@ -1,49 +1,240 @@
-<div class="container mt-5 mb-5">
-  <div class="row align-items-center mb-4">
-    <div class="col-md-6">
-      <h2 class="fw-bold mb-0">Öne Çıkan Ürünler</h2>
+<!-- NAVBAR -->
+<nav class="nexus-nav">
+  <div class="nav-inner">
+    <div class="nav-brand" routerLink="/home" style="cursor:pointer;">
+      <span class="brand-dot"></span>
+      <span class="brand-name">NEXUS</span>
     </div>
-    
-    <div class="col-md-6">
-      <div class="d-flex gap-2">
-        <input type="text" class="form-control rounded-pill" placeholder="Ürün ara..." 
-               [(ngModel)]="searchTerm" (ngModelChange)="applyFilter()">
-        
-        <select class="form-select rounded-pill w-auto" [(ngModel)]="selectedCategory" (ngModelChange)="applyFilter()">
-          <option *ngFor="let cat of categories" [value]="cat">{{cat}}</option>
-        </select>
-      </div>
-    </div>
-  </div>
 
-  <div class="row row-cols-1 row-cols-md-3 g-4">
-    <div class="col" *ngFor="let p of products">
-      <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden" style="background-color: #f8f9fa;">
-        
-        <div class="position-relative">
-          <span class="badge bg-dark position-absolute top-0 end-0 m-3 rounded-pill px-3 py-2 opacity-75">
-            {{ p.category }}
-          </span>
-          <img [src]="p.img || 'https://via.placeholder.com/400x300'" class="card-img-top" alt="Ürün" style="height: 250px; object-fit: cover;">
-        </div>
-        
-        <div class="card-body p-4 d-flex flex-column">
-          <h5 class="card-title fw-bold text-dark mb-1">{{ p.name }}</h5>
-          <p class="card-text text-muted small mb-4">Premium Nexus Collection</p>
-          
-          <div class="mt-auto d-flex justify-content-between align-items-center">
-            <span class="fs-4 fw-bolder text-primary">{{ p.price }} ₺</span>
-            <button class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm" (click)="addToCart(p)">
-              <i class="bi bi-bag-plus me-1"></i> Ekle
-            </button>
+    <div class="nav-search">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" [(ngModel)]="searchTerm" (keyup.enter)="applyFilter()"
+             placeholder="Ürün, kategori veya marka ara..." class="nav-search-input">
+      <button *ngIf="searchTerm" class="search-clear" (click)="searchTerm=''; applyFilter()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="nav-actions">
+      <button class="cart-btn" routerLink="/cart">
+        <i class="fas fa-shopping-bag"></i>
+        <span class="cart-badge" *ngIf="cartCount > 0">{{cartCount}}</span>
+      </button>
+
+      <div class="user-menu" *ngIf="currentUser; else loginBtn">
+        <button class="user-btn" (click)="toggleDropdown()">
+          <div class="u-avatar-sm" [style.background]="isAdmin ? 'linear-gradient(135deg,#6366f1,#a855f7)' : '#e0e7ff'">
+            {{(currentUser.fullName || currentUser.name || 'U').charAt(0).toUpperCase()}}
           </div>
+          <span class="u-name-sm">{{currentUser.fullName || currentUser.name}}</span>
+          <i class="fas fa-chevron-down" style="font-size:10px; color:#94a3b8;"></i>
+        </button>
+        <div class="dropdown-menu" *ngIf="dropdownOpen">
+          <div class="dropdown-header">
+            <strong>{{currentUser.fullName || currentUser.name}}</strong>
+            <span class="d-role-badge" [style.background]="isAdmin ? '#6366f1' : '#22c55e'">{{currentUser.role}}</span>
+          </div>
+          <hr style="margin: 6px 0; border: none; border-top: 1px solid #f1f5f9;">
+          <a routerLink="/profile" class="dropdown-item" (click)="dropdownOpen=false"><i class="fas fa-user"></i> Profilim</a>
+          <a routerLink="/cart" class="dropdown-item" (click)="dropdownOpen=false"><i class="fas fa-shopping-bag"></i> Sepetim</a>
+          <a *ngIf="isAdmin" routerLink="/admin" class="dropdown-item" (click)="dropdownOpen=false"><i class="fas fa-cog"></i> Admin Panel</a>
+          <hr style="margin: 6px 0; border: none; border-top: 1px solid #f1f5f9;">
+          <div class="dropdown-item danger" (click)="logout()"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</div>
         </div>
-        
       </div>
+
+      <ng-template #loginBtn>
+        <button class="login-btn" routerLink="/login">Giriş Yap</button>
+      </ng-template>
     </div>
   </div>
+</nav>
 
-  <div *ngIf="products.length === 0" class="text-center py-5">
-    <h4 class="text-muted">Bu kategoride veya aramada ürün bulunamadı.</h4>
+<!-- HERO SLIDER -->
+<div class="hero-slider">
+  <div class="slide" *ngFor="let slide of sliderImages; let i = index"
+       [class.active]="i === sliderIndex"
+       [style.background]="slide.bg">
+    <div class="slide-content">
+      <span class="slide-badge">{{slide.badge}}</span>
+      <h1 class="slide-title">{{slide.title}}</h1>
+      <p class="slide-sub">{{slide.subtitle}}</p>
+      <button class="slide-btn" (click)="selectCategory('Hepsi')">
+        Alışverişe Başla <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+    <div class="slide-img-wrap">
+      <img [src]="slide.img" alt="" class="slide-img">
+    </div>
+  </div>
+  <div class="slider-dots">
+    <span *ngFor="let s of sliderImages; let i = index"
+          class="dot" [class.active]="i === sliderIndex"
+          (click)="goToSlide(i)"></span>
+  </div>
+  <button class="slider-arrow left" (click)="goToSlide((sliderIndex - 1 + sliderImages.length) % sliderImages.length)">
+    <i class="fas fa-chevron-left"></i>
+  </button>
+  <button class="slider-arrow right" (click)="goToSlide((sliderIndex + 1) % sliderImages.length)">
+    <i class="fas fa-chevron-right"></i>
+  </button>
+</div>
+
+<!-- KATEGORİ KARTLARI -->
+<div class="category-section">
+  <div class="section-inner">
+    <h2 class="section-title">Kategoriler</h2>
+    <div class="category-scroll">
+      <div class="cat-card" [class.active]="selectedCategory === 'Hepsi'" (click)="selectCategory('Hepsi')">
+        <span class="cat-icon">🛍️</span>
+        <span class="cat-name">Tümü</span>
+      </div>
+      <div class="cat-card" *ngFor="let cat of categories"
+           [class.active]="selectedCategory === (cat.name || cat)"
+           (click)="selectCategory(cat.name || cat)">
+        <span class="cat-icon">{{getCategoryIcon(cat.name || cat)}}</span>
+        <span class="cat-name">{{cat.name || cat}}</span>
+      </div>
+    </div>
   </div>
 </div>
+
+<!-- FİLTRELER & ÜRÜNLER -->
+<div class="store-body" id="products-section">
+
+  <!-- Filtre Bar -->
+  <div class="filters-bar">
+    <div class="filters-left">
+      <button class="filter-toggle-btn" (click)="showFilters = !showFilters" [class.active]="showFilters">
+        <i class="fas fa-sliders-h"></i> Filtreler
+        <span class="filter-count" *ngIf="hasActiveFilters">!</span>
+      </button>
+      <span class="results-count" *ngIf="!isLoading">{{products.length}} ürün</span>
+    </div>
+    <div class="filters-right">
+      <select [(ngModel)]="sortType" (ngModelChange)="applyFilter()" class="sort-select">
+        <option value="newest">En Yeni</option>
+        <option value="priceLow">Fiyat: Artan</option>
+        <option value="priceHigh">Fiyat: Azalan</option>
+      </select>
+      <button class="clear-btn" *ngIf="hasActiveFilters" (click)="clearFilters()">
+        <i class="fas fa-times"></i> Temizle
+      </button>
+    </div>
+  </div>
+
+  <!-- Gelişmiş Filtreler Paneli -->
+  <div class="advanced-filters" *ngIf="showFilters">
+    <div class="filter-panel">
+      <div class="filter-section">
+        <label class="f-label">Marka</label>
+        <select [(ngModel)]="selectedBrand" (ngModelChange)="applyFilter()" class="f-select">
+          <option value="Hepsi">Tüm Markalar</option>
+          <option *ngFor="let b of brands" [value]="b.name">{{b.name}}</option>
+        </select>
+      </div>
+      <div class="filter-section">
+        <label class="f-label">Min Fiyat (₺)</label>
+        <input type="number" [(ngModel)]="minPrice" (ngModelChange)="applyFilter()" class="f-input" placeholder="0">
+      </div>
+      <div class="filter-section">
+        <label class="f-label">Max Fiyat (₺)</label>
+        <input type="number" [(ngModel)]="maxPrice" (ngModelChange)="applyFilter()" class="f-input" placeholder="999999">
+      </div>
+    </div>
+  </div>
+
+  <!-- Aktif Filtre Etiketleri -->
+  <div class="active-filters" *ngIf="hasActiveFilters">
+    <span class="filter-tag" *ngIf="selectedCategory !== 'Hepsi'">
+      {{selectedCategory}} <i class="fas fa-times" (click)="selectedCategory='Hepsi'; applyFilter()"></i>
+    </span>
+    <span class="filter-tag" *ngIf="selectedBrand !== 'Hepsi'">
+      {{selectedBrand}} <i class="fas fa-times" (click)="selectedBrand='Hepsi'; applyFilter()"></i>
+    </span>
+    <span class="filter-tag" *ngIf="searchTerm">
+      "{{searchTerm}}" <i class="fas fa-times" (click)="searchTerm=''; applyFilter()"></i>
+    </span>
+    <span class="filter-tag" *ngIf="minPrice !== null">
+      Min {{minPrice}} ₺ <i class="fas fa-times" (click)="minPrice=null; applyFilter()"></i>
+    </span>
+    <span class="filter-tag" *ngIf="maxPrice !== null">
+      Max {{maxPrice}} ₺ <i class="fas fa-times" (click)="maxPrice=null; applyFilter()"></i>
+    </span>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Ürünler yükleniyor...</p>
+  </div>
+
+  <!-- Ürün Grid -->
+  <div class="products-grid" *ngIf="!isLoading">
+    <div class="product-card" *ngFor="let p of products" (click)="goToDetail(p.id)">
+      <div class="card-img-wrap">
+        <img [src]="p.imageUrl" [alt]="p.name" class="card-img" loading="lazy">
+        <span class="card-cat-badge">{{p.category}}</span>
+        <div class="card-overlay">
+          <button class="quick-add" [class.added]="addedProducts.has(p.id)" (click)="addToCart(p, $event)">
+            <i class="fas" [ngClass]="addedProducts.has(p.id) ? 'fa-check' : 'fa-cart-plus'"></i>
+            {{addedProducts.has(p.id) ? 'Eklendi!' : 'Sepete Ekle'}}
+          </button>
+        </div>
+      </div>
+      <div class="card-info">
+        <p class="card-brand">{{p.brandName || 'Nexus Collection'}}</p>
+        <h3 class="card-name">{{p.name}}</h3>
+        <div class="card-footer">
+          <span class="card-price">{{p.price | number:'1.0-0'}} ₺</span>
+          <span class="stock-badge" [class.low]="p.stock < 10" [class.out]="p.stock === 0">
+            <i class="fas" [ngClass]="p.stock === 0 ? 'fa-times-circle' : p.stock < 10 ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+            {{p.stock === 0 ? 'Tükendi' : p.stock < 10 ? 'Son ' + p.stock + ' adet' : 'Stokta'}}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Boş State -->
+    <div class="empty-state" *ngIf="products.length === 0">
+      <div class="empty-icon">🔍</div>
+      <h3>Ürün bulunamadı</h3>
+      <p>Farklı bir kategori veya arama terimi deneyin</p>
+      <button class="empty-btn" (click)="clearFilters()">Filtreleri Temizle</button>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-bar" *ngIf="totalPages > 1">
+    <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button class="page-btn first" *ngIf="currentPage > 3" (click)="goToPage(1)">1</button>
+    <span *ngIf="currentPage > 4" style="color:#94a3b8; padding: 0 4px;">...</span>
+    <button class="page-btn" *ngFor="let p of pageNumbers" [class.active]="p === currentPage" (click)="goToPage(p)">{{p}}</button>
+    <span *ngIf="currentPage < totalPages - 3" style="color:#94a3b8; padding: 0 4px;">...</span>
+    <button class="page-btn last" *ngIf="currentPage < totalPages - 2" (click)="goToPage(totalPages)">{{totalPages}}</button>
+    <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+    <span class="page-info">Toplam {{totalCount}} ürün</span>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="nexus-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="brand-dot"></span>
+      <span class="brand-name">NEXUS</span>
+      <p>Premium alışveriş deneyimi</p>
+    </div>
+    <div class="footer-links">
+      <a routerLink="/home">Ana Sayfa</a>
+      <a routerLink="/cart">Sepet</a>
+      <a routerLink="/profile" *ngIf="currentUser">Profilim</a>
+      <a routerLink="/login" *ngIf="!currentUser">Giriş Yap</a>
+    </div>
+    <p class="footer-copy">© 2025 Nexus. Tüm hakları saklıdır.</p>
+  </div>
+</footer>

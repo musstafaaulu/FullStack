@@ -1,0 +1,276 @@
+<!-- NAV -->
+<nav class="detail-nav">
+  <div class="nav-inner">
+    <button class="back-btn" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i> Geri
+    </button>
+    <span class="nav-brand" routerLink="/home">NEXUS</span>
+    <button class="cart-btn" routerLink="/cart">
+      <i class="fas fa-shopping-bag"></i>
+      <span class="cart-badge" *ngIf="cartCount > 0">{{cartCount}}</span>
+    </button>
+  </div>
+</nav>
+
+<!-- LOADING -->
+<div class="loading-wrap" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <p>Yükleniyor...</p>
+</div>
+
+<!-- ÜRÜN DETAY -->
+<div class="detail-wrapper" *ngIf="!isLoading && product">
+
+  <!-- BREADCRUMB -->
+  <div class="breadcrumb">
+    <span routerLink="/home" style="cursor:pointer;">Ana Sayfa</span>
+    <i class="fas fa-chevron-right"></i>
+    <span>{{product.category}}</span>
+    <i class="fas fa-chevron-right"></i>
+    <span class="bc-current">{{product.name}}</span>
+  </div>
+
+  <div class="product-layout">
+    <!-- SOL: GÖRSEL -->
+    <div class="image-section">
+      <div class="main-img-wrap">
+        <img [src]="selectedImage" [alt]="product.name" class="main-img">
+        <span class="category-chip">{{product.category}}</span>
+        <button class="wishlist-btn" [class.active]="isWishlisted" (click)="toggleWishlist()">
+          <i class="fas fa-heart"></i>
+        </button>
+      </div>
+      <!-- Thumbnail'lar (simüle) -->
+      <div class="thumbnails">
+        <div class="thumb" [class.active]="selectedImage === product.imageUrl" (click)="selectedImage = product.imageUrl">
+          <img [src]="product.imageUrl" alt="">
+        </div>
+        <div class="thumb" [class.active]="selectedImage === product.imageUrl + '?v=2'" (click)="selectedImage = product.imageUrl + '?v=2'">
+          <img [src]="product.imageUrl" alt="" style="filter: brightness(0.85)">
+        </div>
+        <div class="thumb" [class.active]="selectedImage === product.imageUrl + '?v=3'" (click)="selectedImage = product.imageUrl + '?v=3'">
+          <img [src]="product.imageUrl" alt="" style="filter: saturate(0.7)">
+        </div>
+      </div>
+    </div>
+
+    <!-- SAĞ: BİLGİLER -->
+    <div class="info-section">
+      <div class="top-badges">
+        <span class="brand-badge">{{product.brandName || 'Nexus Collection'}}</span>
+        <span class="stock-dot" [class.low]="product.stock < 10" [class.out]="product.stock === 0">
+          <i class="fas fa-circle"></i>
+          {{product.stock === 0 ? 'Tükendi' : product.stock < 10 ? 'Son stoklar' : 'Stokta'}}
+        </span>
+      </div>
+
+      <h1 class="product-title">{{product.name}}</h1>
+
+      <!-- PUAN ÖZET -->
+      <div class="rating-row" *ngIf="comments.length > 0">
+        <div class="stars">
+          <i class="fas fa-star" *ngFor="let s of stars" [class.lit]="s <= avgRating"></i>
+        </div>
+        <span class="rating-val">{{avgRating}}</span>
+        <span class="rating-count">({{comments.length}} değerlendirme)</span>
+      </div>
+      <div class="rating-row" *ngIf="comments.length === 0">
+        <div class="stars">
+          <i class="fas fa-star" *ngFor="let s of stars" style="color:#e2e8f0;"></i>
+        </div>
+        <span class="rating-count">Henüz değerlendirme yok</span>
+      </div>
+
+      <div class="price-row">
+        <span class="price">{{product.price | number:'1.0-0'}} ₺</span>
+      </div>
+
+      <!-- TABS: Açıklama / Özellikler -->
+      <div class="tabs">
+        <button class="tab-btn" [class.active]="activeTab === 'description'" (click)="activeTab = 'description'">Açıklama</button>
+        <button class="tab-btn" [class.active]="activeTab === 'comments'" (click)="activeTab = 'comments'">
+          Yorumlar <span *ngIf="comments.length > 0" class="tab-badge">{{comments.length}}</span>
+        </button>
+      </div>
+
+      <div class="tab-content" *ngIf="activeTab === 'description'">
+        <p class="description" *ngIf="product.description">{{product.description}}</p>
+        <p class="description no-desc" *ngIf="!product.description">Bu ürün için açıklama bulunmamaktadır.</p>
+        <div class="meta-info">
+          <div class="meta-item" *ngIf="product.brandName">
+            <i class="fas fa-trademark"></i>
+            <span>Marka: <strong>{{product.brandName}}</strong></span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-tag"></i>
+            <span>Kategori: <strong>{{product.category}}</strong></span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-boxes"></i>
+            <span>Stok: <strong>{{product.stock}} adet</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" *ngIf="activeTab === 'comments'">
+        <div class="mini-comments">
+          <div class="mc-item" *ngFor="let c of comments.slice(0, 3)">
+            <div class="mc-stars">
+              <i class="fas fa-star" *ngFor="let s of stars" [style.color]="s <= c.rating ? '#f59e0b' : '#e2e8f0'" style="font-size:11px;"></i>
+            </div>
+            <p>"{{c.text}}"</p>
+            <span class="mc-user">— {{c.userName || 'Kullanıcı'}}</span>
+          </div>
+          <p *ngIf="comments.length === 0" style="color:#94a3b8; font-size:14px;">Henüz yorum yok.</p>
+        </div>
+      </div>
+
+      <!-- MİKTAR -->
+      <div class="quantity-row">
+        <span class="qty-label">Adet</span>
+        <div class="qty-ctrl">
+          <button (click)="quantity > 1 ? quantity = quantity - 1 : null">−</button>
+          <span>{{quantity}}</span>
+          <button (click)="quantity < product.stock ? quantity = quantity + 1 : null">+</button>
+        </div>
+        <span class="qty-total">= <strong>{{product.price * quantity | number:'1.0-0'}} ₺</strong></span>
+      </div>
+
+      <!-- BUTONLAR -->
+      <div class="action-buttons">
+        <button class="add-cart-btn" [class.added]="addedToCart" (click)="addToCart()" [disabled]="product.stock === 0">
+          <i class="fas" [ngClass]="addedToCart ? 'fa-check' : 'fa-shopping-bag'"></i>
+          {{ addedToCart ? 'Eklendi!' : (product.stock === 0 ? 'Stok Yok' : 'Sepete Ekle') }}
+        </button>
+        <button class="icon-btn wish" [class.active]="isWishlisted" (click)="toggleWishlist()" title="Favorilere ekle">
+          <i class="fas fa-heart"></i>
+        </button>
+        <button class="icon-btn share" (click)="shareProduct()" title="Paylaş">
+          <i class="fas fa-share-alt"></i>
+        </button>
+      </div>
+
+      <!-- Kargo / Garanti bilgisi -->
+      <div class="trust-badges">
+        <div class="trust-item">
+          <i class="fas fa-truck"></i>
+          <span>Hızlı Teslimat</span>
+        </div>
+        <div class="trust-item">
+          <i class="fas fa-shield-alt"></i>
+          <span>2 Yıl Garanti</span>
+        </div>
+        <div class="trust-item">
+          <i class="fas fa-undo"></i>
+          <span>Kolay İade</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PUAN DAĞILIMI + YORUMLAR -->
+  <div class="comments-section">
+    <div class="comments-header">
+      <h2 class="section-title">
+        <i class="fas fa-comments"></i> Müşteri Yorumları
+        <span class="count-badge" *ngIf="comments.length > 0">{{comments.length}}</span>
+      </h2>
+    </div>
+
+    <!-- Puan Dağılımı -->
+    <div class="rating-breakdown" *ngIf="comments.length > 0">
+      <div class="rb-score">
+        <span class="rb-big">{{avgRating}}</span>
+        <div class="stars">
+          <i class="fas fa-star" *ngFor="let s of stars" [class.lit]="s <= avgRating"></i>
+        </div>
+        <span class="rb-count">{{comments.length}} yorum</span>
+      </div>
+      <div class="rb-bars">
+        <div class="rb-row" *ngFor="let s of [5,4,3,2,1]">
+          <span class="rb-label">{{s}} ⭐</span>
+          <div class="rb-bar-wrap">
+            <div class="rb-bar-fill" [style.width]="getRatingPercent(s) + '%'"></div>
+          </div>
+          <span class="rb-pct">{{getRatingPercent(s)}}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Yorum Listesi -->
+    <div class="comments-list" *ngIf="comments.length > 0">
+      <div class="comment-card" *ngFor="let c of comments">
+        <div class="comment-header">
+          <div class="comment-avatar" [style.background]="'hsl(' + (c.userId * 47 % 360) + ',60%,55%)'">
+            {{(c.userName || 'K').charAt(0).toUpperCase()}}
+          </div>
+          <div class="comment-meta">
+            <strong>{{c.userName || 'Kullanıcı'}}</strong>
+            <div class="comment-stars">
+              <i class="fas fa-star" *ngFor="let s of stars"
+                 [style.color]="s <= c.rating ? '#f59e0b' : '#e2e8f0'" style="font-size:12px;"></i>
+              <span class="c-rating-num">{{c.rating}}/5</span>
+            </div>
+          </div>
+          <span class="c-date">{{c.createdAt | date:'dd.MM.yyyy' }}</span>
+        </div>
+        <p class="comment-text">{{c.text}}</p>
+      </div>
+    </div>
+
+    <div class="no-comments" *ngIf="comments.length === 0">
+      <span style="font-size:48px;">💬</span>
+      <p>Henüz yorum yok. İlk yorumu sen yaz!</p>
+    </div>
+
+    <!-- Yorum Formu -->
+    <div class="comment-form-wrap">
+      <h3>Yorum Yaz</h3>
+      <div *ngIf="!currentUser" class="login-prompt">
+        <i class="fas fa-lock"></i>
+        Yorum yazmak için <a routerLink="/login">giriş yap</a>.
+      </div>
+      <div *ngIf="currentUser" class="comment-form">
+        <div class="star-select">
+          <span>Puanın:</span>
+          <div class="star-picker">
+            <i class="fas fa-star" *ngFor="let s of stars"
+               [class.lit]="s <= newComment.rating"
+               (click)="setRating(s)"
+               (mouseover)="newComment.rating = s"></i>
+          </div>
+          <span class="selected-rating">{{newComment.rating}}/5</span>
+        </div>
+        <textarea [(ngModel)]="newComment.text" placeholder="Ürün hakkında düşüncelerini paylaş..."
+                  class="comment-textarea" rows="4"></textarea>
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <button class="submit-btn" (click)="submitComment()" [disabled]="submittingComment || !newComment.text.trim()">
+            <i class="fas" [ngClass]="submittingComment ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+            {{ submittingComment ? 'Gönderiliyor...' : 'Yorumu Gönder' }}
+          </button>
+          <div class="success-msg" *ngIf="commentSuccess">
+            <i class="fas fa-check-circle"></i> Yorumun onay bekliyor, teşekkürler!
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- İLGİLİ ÜRÜNLER -->
+  <div class="related-section" *ngIf="relatedProducts.length > 0">
+    <h2 class="section-title" style="margin-bottom: 20px;"><i class="fas fa-fire"></i> Benzer Ürünler</h2>
+    <div class="related-grid">
+      <div class="related-card" *ngFor="let p of relatedProducts" (click)="goToProduct(p.id)">
+        <div class="related-img-wrap">
+          <img [src]="p.imageUrl" [alt]="p.name">
+        </div>
+        <div class="related-info">
+          <p class="related-brand">{{p.brandName || 'Nexus'}}</p>
+          <h4>{{p.name}}</h4>
+          <span class="related-price">{{p.price | number:'1.0-0'}} ₺</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

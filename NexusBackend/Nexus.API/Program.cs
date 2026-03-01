@@ -1,36 +1,39 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Nexus.API.Middleware;
 using Nexus.Data.Contexts;
+using Serilog;
+using System.Text;
+
+// ── SERILOG KURULUMU ──────────────────────────────────────
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/nexus-.log", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+// ──────────────────────────────────────────────────────────
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog(); // ✅ Host'a Serilog bağla
+
 builder.Services.AddControllers();
-
-// --- 1. ADIM: CORS AYARI (TEK VE TEMİZ) ---
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAngular", policy =>
-    {
-        policy.WithOrigins("http://localhost:4200")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
 builder.Services.AddEndpointsApiExplorer();
+
+// ✅ Swagger JWT desteği
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Nexus API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Nexus.API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Token'ı buraya girin. Örnek: Bearer eyJhbGci...",
         Name = "Authorization",
-        In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Bearer {token}"
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -44,32 +47,42 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=NexusStore.db"));
+builder.Services.AddAutoMapper(typeof(Nexus.API.Mapping.MappingProfile));
 
-// --- 2. ADIM: JWT AYARLARI ---
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "Bu_Cok_Uzun_Ve_Gizli_Bir_Anahtar_123456789"; // Fallback eklendi
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "NexusAPI",
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "NexusAngular",
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes("nexus_cok_gizli_ve_uzun_bir_guvenlik_anahtari_123456789!")),
+            ValidateIssuer = false,
+            ValidateAudience = false
         };
     });
 
-builder.Services.AddAuthorization(); // FallbackPolicy kaldırıldı, Login'i engellemesin diye
+builder.Services.AddAuthorization();
+
+// ✅ CORS — 4200 ve 4300 her ikisine de izin ver
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "http://localhost:4300")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
-// --- 3. ADIM: MIDDLEWARE SIRALAMASI (BU SIRA ÇOK KRİTİK!) ---
-app.UseCors("AllowAngular"); // CORS en üstte olmalı
+app.UseStaticFiles();
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseSerilogRequestLogging(); // ✅ Her HTTP isteği loglanır
 
 if (app.Environment.IsDevelopment())
 {
@@ -77,8 +90,49 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseAuthentication(); 
+app.UseCors("AllowAngular");
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// ── SEED DATA ──────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+
+    if (!db.Companies.Any())
+    {
+        db.Companies.Add(new Nexus.Core.Entities.Company
+        {
+            Name     = "Ufuk Ayakkabı",
+            Slug     = "ufuk-ayakkabi",
+            Email    = "info@ufukayakkabi.com",
+            Phone    = "05001234567",
+            Address  = "İstanbul",
+            LogoUrl  = "",
+            Website  = "",
+            IsActive = true
+        });
+        db.SaveChanges();
+    }
+
+    var company = db.Companies.First();
+
+    if (!db.Users.Any(u => u.Email == "admin@nexus.com"))
+    {
+        db.Users.Add(new Nexus.Core.Entities.User
+        {
+            FullName     = "Admin User",
+            Email        = "admin@nexus.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+            Role         = "Admin",
+            CompanyId    = company.Id
+        });
+        db.SaveChanges();
+    }
+}
+// ───────────────────────────────────────────────────────────
+
 app.Run();

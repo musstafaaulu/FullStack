@@ -1,0 +1,139 @@
+<!-- NAV -->
+<nav style="background:#1e293b; padding:16px 32px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+  <a routerLink="/home" style="color:#94a3b8; text-decoration:none; display:flex; align-items:center; gap:8px; font-weight:600; font-size:14px;">
+    <i class="fas fa-arrow-left"></i> Mağazaya Dön
+  </a>
+  <span style="color:white; font-weight:900; font-size:20px; letter-spacing:2px;">NEXUS</span>
+  <span style="color:#6366f1; font-size:13px; font-weight:700;">
+    <i class="fas fa-box"></i> Siparişlerim
+  </span>
+</nav>
+
+<div style="min-height:calc(100vh - 60px); background:#f8fafc; padding:40px 16px;">
+  <div style="max-width:800px; margin:0 auto;">
+
+    <!-- Başlık -->
+    <div style="margin-bottom:32px;">
+      <h1 style="font-size:28px; font-weight:900; color:#1e293b; margin:0 0 6px;">Siparişlerim</h1>
+      <p style="color:#94a3b8; font-size:15px; margin:0;">Tüm sipariş geçmişiniz</p>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" style="text-align:center; padding:60px 0; color:#94a3b8;">
+      <i class="fas fa-spinner fa-spin" style="font-size:40px; display:block; margin-bottom:16px;"></i>
+      Yükleniyor...
+    </div>
+
+    <!-- Boş durum -->
+    <div *ngIf="!isLoading && orders.length === 0"
+         style="text-align:center; padding:80px 20px; background:white; border-radius:24px; box-shadow:0 2px 12px rgba(0,0,0,0.04);">
+      <div style="width:100px; height:100px; background:linear-gradient(135deg,#e0e7ff,#c7d2fe); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px;">
+        <i class="fas fa-box-open" style="font-size:40px; color:#6366f1;"></i>
+      </div>
+      <h3 style="font-size:22px; font-weight:800; color:#1e293b; margin-bottom:10px;">Henüz sipariş yok</h3>
+      <p style="color:#94a3b8; font-size:15px; margin-bottom:28px;">İlk siparişinizi vermek için mağazamızı keşfedin.</p>
+      <a routerLink="/home" style="background:linear-gradient(135deg,#6366f1,#a855f7); color:white; text-decoration:none; padding:14px 28px; border-radius:14px; font-weight:700; display:inline-flex; align-items:center; gap:8px;">
+        <i class="fas fa-store"></i> Alışverişe Başla
+      </a>
+    </div>
+
+    <!-- Sipariş kartları -->
+    <div *ngFor="let order of orders"
+         style="background:white; border-radius:20px; margin-bottom:20px; box-shadow:0 2px 16px rgba(0,0,0,0.05); border:1px solid #e2e8f0; overflow:hidden;">
+
+      <!-- Kart üst: sipariş no, tarih, durum, tutar -->
+      <div style="padding:20px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; border-bottom:1px solid #f1f5f9;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;"
+               [style.background]="order.status === 'Teslim Edildi' ? '#dcfce7' : order.status === 'Kargoda' ? '#dbeafe' : order.status === 'İptal Edildi' ? '#fee2e2' : '#fef3c7'">
+            {{order.status === 'Teslim Edildi' ? '✅' : order.status === 'Kargoda' ? '🚚' : order.status === 'İptal Edildi' ? '❌' : order.status === 'Hazırlanıyor' ? '📦' : '⏳'}}
+          </div>
+          <div>
+            <div style="font-size:16px; font-weight:800; color:#1e293b;">
+              Sipariş <span style="color:#6366f1;">#{{order.id}}</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8; margin-top:2px;">
+              {{order.createdAt | date:'dd MMMM yyyy, HH:mm'}}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <span style="padding:6px 14px; border-radius:20px; font-size:12px; font-weight:700;"
+                [style.background]="order.status === 'Teslim Edildi' ? '#dcfce7' : order.status === 'Kargoda' ? '#dbeafe' : order.status === 'İptal Edildi' ? '#fee2e2' : order.status === 'Hazırlanıyor' ? '#fef3c7' : '#f1f5f9'"
+                [style.color]="order.status === 'Teslim Edildi' ? '#16a34a' : order.status === 'Kargoda' ? '#1d4ed8' : order.status === 'İptal Edildi' ? '#dc2626' : order.status === 'Hazırlanıyor' ? '#d97706' : '#64748b'">
+            {{order.status}}
+          </span>
+          <span style="font-size:22px; font-weight:900; color:#6366f1;">{{order.totalPrice | number:'1.2-2'}} ₺</span>
+        </div>
+      </div>
+
+      <!-- ✅ ÜRÜN LİSTESİ -->
+      <div *ngIf="order.items && order.items.length > 0" style="padding:16px 24px; border-bottom:1px solid #f1f5f9;">
+        <div style="font-size:12px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">
+          <i class="fas fa-shopping-bag"></i> {{getTotalItems(order)}} ürün
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div *ngFor="let item of order.items"
+               style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f8fafc; border-radius:12px; border:1px solid #f1f5f9;">
+            <!-- Ürün resmi -->
+            <img [src]="item.imageUrl || 'https://picsum.photos/seed/' + item.id + '/80/80'"
+                 [alt]="item.name"
+                 onerror="this.src='https://picsum.photos/seed/fallback/80/80'"
+                 style="width:56px; height:56px; object-fit:cover; border-radius:10px; flex-shrink:0; border:1px solid #e2e8f0;">
+            <!-- Ürün bilgisi -->
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; margin-bottom:2px;">
+                {{item.brandName || item.category}}
+              </div>
+              <div style="font-size:14px; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                {{item.name}}
+              </div>
+            </div>
+            <!-- Adet ve fiyat -->
+            <div style="text-align:right; flex-shrink:0;">
+              <div style="font-size:13px; font-weight:800; color:#6366f1;">
+                {{item.price * item.quantity | number:'1.0-0'}} ₺
+              </div>
+              <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+                {{item.quantity}} adet × {{item.price | number:'1.0-0'}} ₺
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ürün yoksa (eski siparişler) küçük bilgi -->
+      <div *ngIf="!order.items || order.items.length === 0"
+           style="padding:12px 24px; border-bottom:1px solid #f1f5f9; color:#94a3b8; font-size:13px; font-style:italic;">
+        <i class="fas fa-info-circle"></i> Ürün detayı mevcut değil
+      </div>
+
+      <!-- Kart alt: kullanıcı, ödeme, kargo adımları -->
+      <div style="padding:14px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; background:#f8fafc;">
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+          <span style="font-size:13px; color:#64748b; display:flex; align-items:center; gap:6px;">
+            <i class="fas fa-user" style="color:#94a3b8;"></i> {{order.userName || 'Müşteri'}}
+          </span>
+          <span *ngIf="order.paymentMethod" style="font-size:13px; color:#64748b; display:flex; align-items:center; gap:6px;">
+            <i class="fas fa-credit-card" style="color:#94a3b8;"></i> {{order.paymentMethod}}
+          </span>
+        </div>
+
+        <!-- Kargo takip adımları -->
+        <div style="display:flex; align-items:center; gap:4px;">
+          <div *ngFor="let step of ['Beklemede','Hazırlanıyor','Kargoda','Teslim Edildi']; let i = index"
+               style="display:flex; align-items:center;">
+            <div style="width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; transition:all 0.2s;"
+                 [style.background]="isStepDone(order.status, step) ? '#6366f1' : '#e2e8f0'"
+                 [style.color]="isStepDone(order.status, step) ? 'white' : '#94a3b8'">
+              {{i+1}}
+            </div>
+            <div *ngIf="i < 3" style="width:20px; height:3px; border-radius:99px; margin:0 2px;"
+                 [style.background]="isStepDone(order.status, step) ? '#6366f1' : '#e2e8f0'"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
