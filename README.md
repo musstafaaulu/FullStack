@@ -219,42 +219,42 @@ Tüm sayfalar `adminGuard` ile korunur, JWT token zorunludur.
 ### Ekran Görüntüleri
 
 #### Dashboard & Giriş
-![Admin Giriş](screenshoot/admin.png)
-![Admin Dashboard](screenshoot/admin1.png)
+![Admin Giriş](screenshots/admin.png)
+![Admin Dashboard](screenshots/admin1.png)
 
 #### Ürün Yönetimi
-![Ürün Listesi](screenshoot/admin2.png)
-![Ürün Ekleme / Düzenleme](screenshoot/admin3.png)
-![Ürün Detay](screenshoot/admin4.png)
+![Ürün Listesi](screenshots/admin2.png)
+![Ürün Ekleme / Düzenleme](screenshots/admin3.png)
+![Ürün Detay](screenshots/admin4.png)
 
 #### Sipariş Yönetimi
 > Siparişler listelenir, durum güncellenir (Beklemede / Hazırlanıyor / Kargoda / Teslim Edildi / İptal Edildi)
 
-![Sipariş Listesi — Durum Güncelleme](screenshoot/admin11.png)
+![Sipariş Listesi — Durum Güncelleme](screenshots/admin11.png)
 
 #### Marka Yönetimi
 > Marka adı, açıklama ve logo URL ile marka ekleme/silme
 
-![Marka Yönetimi](screenshoot/admin5.png)
+![Marka Yönetimi](screenshots/admin5.png)
 
 #### Banner / Slider Yönetimi
 > Başlık, görsel URL, link, sıra no ve aktif/pasif durumuyla banner ekleme
 
-![Banner Ekle](screenshoot/admin6.png)
-![Banner Listesi](screenshoot/admin8.png)
+![Banner Ekle](screenshots/admin6.png)
+![Banner Listesi](screenshots/admin8.png)
 
 #### Yorum Kontrolü
 > Onaylama / reddetme, puan ve müşteri bilgisi
 
-![Yorum Kontrolü](screenshoot/admin7.png)
+![Yorum Kontrolü](screenshots/admin7.png)
 
 #### Kullanıcı & Çalışan Yönetimi
-![Kullanıcı Listesi](screenshoot/admin9.png)
+![Kullanıcı Listesi](screenshots/admin9.png)
 
 #### Şirket Ayarları
-![Şirket Ayarları](screenshoot/admin10.png)
-![Şirket Detay](screenshoot/company.png)
-![Şirket Düzenleme](screenshoot/company1.png)
+![Şirket Ayarları](screenshots/admin10.png)
+![Şirket Detay](screenshots/company.png)
+![Şirket Düzenleme](screenshots/company1.png)
 
 ### Sayfalar ve Özellikler
 
@@ -281,35 +281,35 @@ Tüm sayfalar `adminGuard` ile korunur, JWT token zorunludur.
 > Sol taraf: Platform tanıtımı (500+ Şirket, 12K+ Ürün, %98 Memnuniyet)
 > Sağ taraf: Giriş Yap / Üye Ol / Şirket Kur sekmeleri
 
-![Giriş & Kayıt Sayfası](screenshoot/login.png)
+![Giriş & Kayıt Sayfası](screenshots/login.png)
 
 #### Ana Sayfa
 > Banner slider, sol sticky sidebar kategoriler, marka ve fiyat aralığı filtreleri, ürün grid
 
-![Ana Sayfa — Ürün Listesi](screenshoot/home1.png)
-![Ana Sayfa — Fiyat Filtresi Uygulanmış (100₺–1000₺)](screenshoot/home2.png)
-![Ana Sayfa Genel](screenshoot/home.png)
+![Ana Sayfa — Ürün Listesi](screenshots/home1.png)
+![Ana Sayfa — Fiyat Filtresi Uygulanmış (100₺–1000₺)](screenshots/home2.png)
+![Ana Sayfa Genel](screenshots/home.png)
 
 #### Sepet & Ödeme
 > Ücretsiz kargo bildirimi, ürün adedi değiştirme, 3 ödeme seçeneği, sipariş özeti
 
-![Sepet — Kredi Kartı Ödeme](screenshoot/cart3.png)
-![Sepet — Kapıda Ödeme (+50₺ hizmet bedeli)](screenshoot/cart4.png)
+![Sepet — Kredi Kartı Ödeme](screenshots/cart3.png)
+![Sepet — Kapıda Ödeme (+50₺ hizmet bedeli)](screenshots/cart4.png)
 
 #### Sipariş Tamamlama
 > Sipariş onaylandığında çıkan başarı ekranı, 3 saniye sonra siparişlere yönlendirir
 
-![Sipariş Oluşturuldu](screenshoot/cart.png)
+![Sipariş Oluşturuldu](screenshots/cart.png)
 
 #### Siparişlerim
 > Sipariş edilen ürünler resim + isim + fiyat ile listelenir, 4 adımlı kargo takibi
 
-![Siparişlerim](screenshoot/order.png)
+![Siparişlerim](screenshots/order.png)
 
 #### Profil
-![Profil](screenshoot/profile.png)
-![Profil — Sipariş Geçmişi](screenshoot/profile%202.png)
-![Profil — Şifre Değiştirme](screenshoot/profile3.png)
+![Profil](screenshots/profile.png)
+![Profil — Sipariş Geçmişi](screenshots/profile 2.png)
+![Profil — Şifre Değiştirme](screenshots/profile3.png)
 
 ### Sayfalar ve Özellikler
 
